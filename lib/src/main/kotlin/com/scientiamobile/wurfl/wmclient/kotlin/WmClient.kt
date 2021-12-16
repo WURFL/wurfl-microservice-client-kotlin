@@ -23,8 +23,8 @@ private const val DEVICE_ID_CACHE_TYPE = "dId-cache"
 private const val HEADERS_CACHE_TYPE = "head-cache"
 
 // Timeouts in milliseconds
-private const val DEFAULT_CONN_TIMEOUT: Int = 10000;
-private const val DEFAULT_RW_TIMEOUT: Int = 60000;
+private const val DEFAULT_CONN_TIMEOUT: Int = 10000
+private const val DEFAULT_RW_TIMEOUT: Int = 60000
 
 class WmClient internal constructor(
     private val scheme: String,
@@ -36,24 +36,37 @@ class WmClient internal constructor(
     companion object {
         fun create(scheme: String, host: String, port: String, baseURI: String?): WmClient {
             val uri = baseURI ?: ""
+            if (scheme.isEmpty()) {
+                throw WmException("WM client scheme cannot be empty")
+            }
+
             val wmclient = WmClient(scheme, host, port, uri)
-            wmclient.internalClient = HttpClient(Apache) {
-                engine {
-                    connectTimeout = DEFAULT_CONN_TIMEOUT
-                    socketTimeout = DEFAULT_RW_TIMEOUT
-                    customizeClient {
-                        setMaxConnPerRoute(100)
+            if (scheme.equals("http", ignoreCase = true) || scheme.equals("https", ignoreCase = true)) {
+                wmclient.internalClient = HttpClient(Apache) {
+                    engine {
+                        connectTimeout = DEFAULT_CONN_TIMEOUT
+                        socketTimeout = DEFAULT_RW_TIMEOUT
+                        customizeClient {
+                            setMaxConnPerRoute(100)
+                        }
+                    }
+                    install(JsonFeature) {
+                        serializer = GsonSerializer()
                     }
                 }
-                install(JsonFeature) {
-                    serializer = GsonSerializer()
-                }
+            } else {
+                throw WmException("Invalid connection scheme specified:  [ $scheme ]")
             }
-            val info = wmclient.getInfo()
-            wmclient.staticCaps = info.staticCaps.sortedArray()
-            wmclient.virtualCaps = info.virtualCaps.sortedArray()
-            wmclient.importantHeaders = info.importantHeaders
-            return wmclient
+
+            try {
+                val info = wmclient.getInfo()
+                wmclient.staticCaps = info.staticCaps.sortedArray()
+                wmclient.virtualCaps = info.virtualCaps.sortedArray()
+                wmclient.importantHeaders = info.importantHeaders
+                return wmclient
+            } catch (e: Exception){
+                throw WmException("Unable to create wm client: ${e.message}")
+            }
         }
     }
 
@@ -86,7 +99,7 @@ class WmClient internal constructor(
             return@runBlocking internalClient.get<JSONInfoData>(urlString = createUrl("/v2/getinfo/json"))
         }
         if (!(checkData(info))) {
-            throw WmException("Server returned empty data or a wrong json format");
+            throw WmException("Server returned empty data or a wrong json format")
         }
         return info
     }

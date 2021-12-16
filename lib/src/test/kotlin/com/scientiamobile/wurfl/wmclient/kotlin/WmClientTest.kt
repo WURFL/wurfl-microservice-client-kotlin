@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
 class WmClientTest {
 
     @Test fun createAndGetInfoOk() {
-        val wmclient = WmClient.create("http", "localhost", "9080", "")
+        val wmclient = WmClient.create("http", "localhost", "8080", "")
         assertNotNull(wmclient)
         val info = wmclient.getInfo()
 
@@ -29,5 +29,15 @@ class WmClientTest {
         assertTrue { info.importantHeaders.isNotEmpty() }
         assertTrue { info.staticCaps.isNotEmpty() }
         assertTrue { info.virtualCaps.isNotEmpty() }
+    }
+
+    @Test(expected = WmException::class)
+    fun TestCreateWithEmptyServerValues() {
+        WmClient.create("", "", "", "")
+    }
+
+    @Test(expected = WmException::class)
+    fun createWithServerDownTest() {
+        WmClient.create("http", "localhost", "18080", "")
     }
 }
