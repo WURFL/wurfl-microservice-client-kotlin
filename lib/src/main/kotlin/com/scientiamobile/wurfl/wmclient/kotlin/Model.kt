@@ -13,9 +13,7 @@ limitations under the License.
 package com.scientiamobile.wurfl.wmclient.kotlin
 
 import com.google.gson.annotations.SerializedName
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class JSONInfoData(
     @SerializedName("wurfl_api_version")
     val wurflApiVersion: String,
@@ -30,8 +28,21 @@ data class JSONInfoData(
     @SerializedName("virtual_caps")
     val virtualCaps: Array<String>,
     @SerializedName("ltime")
-    val ltime: String
+    val ltime: String,
 )
+
+/**
+ * Holds the detected device data received from wm server.
+ */
+data class JSONDeviceData(
+    @SerializedName("capabilities")
+    val capabilities: Map<String, String>,
+    @SerializedName("error")
+    val error: String,
+    @SerializedName("mtime")
+    val mtime: Int,
+    @SerializedName("ltime")
+    val ltime: String? = null)
 
 /**
  * WmException is a general purpose exception thrown whenever an unrecoverable error occurs during device detection (ie: no connection available to WM server,

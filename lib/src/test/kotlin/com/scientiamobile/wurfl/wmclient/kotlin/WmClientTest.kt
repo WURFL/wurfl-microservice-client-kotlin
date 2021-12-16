@@ -37,6 +37,11 @@ class WmClientTest {
     }
 
     @Test(expected = WmException::class)
+    fun testCreateWithoutHostTest(){
+        WmClient.create("http", "", "8080", "")
+    }
+
+    @Test(expected = WmException::class)
     fun createWithServerDownTest() {
         WmClient.create("http", "localhost", "18080", "")
     }

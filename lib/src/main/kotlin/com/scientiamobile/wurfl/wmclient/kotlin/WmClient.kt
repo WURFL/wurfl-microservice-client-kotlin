@@ -83,6 +83,12 @@ class WmClient internal constructor(
     // Time of last WURFL.xml file load on server
     private var ltime: String = ""
 
+    // Internal caches
+    // Maps device ID -> JSONDeviceData
+    private var devIDCache: LRUCache<String, JSONDeviceData>? = null
+    // Maps concat headers (mainly UA) -> JSONDeviceData
+    private var headersCache : LRUCache<String, JSONDeviceData>? = null
+
     private lateinit var internalClient: HttpClient
 
     private fun createUrl(path: String): String {
@@ -102,6 +108,25 @@ class WmClient internal constructor(
             throw WmException("Server returned empty data or a wrong json format")
         }
         return info
+    }
+
+    fun setCacheSize(uaMaxEntries: Int) {
+        this.headersCache = LRUCache(uaMaxEntries)
+        devIDCache = LRUCache() // this has the default cache size
+    }
+
+    fun getActualCacheSizes(): Pair<Int,Int> {
+
+        var dIdCacheSize = 0
+        if (devIDCache != null) {
+            dIdCacheSize = devIDCache!!.size()
+        }
+        var headerCacheSize = 0
+        if (headersCache != null) {
+            headerCacheSize = headersCache!!.size()
+        }
+
+        return Pair(dIdCacheSize, headerCacheSize)
     }
 
     private fun checkData(info: JSONInfoData): Boolean {
