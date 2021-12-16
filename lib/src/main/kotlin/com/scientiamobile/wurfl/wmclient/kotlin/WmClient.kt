@@ -82,16 +82,18 @@ class WmClient internal constructor(
 
     @Throws(WmException::class)
     fun getInfo(): JSONInfoData {
-        return runBlocking {
+        val info = runBlocking {
             return@runBlocking internalClient.get<JSONInfoData>(urlString = createUrl("/v2/getinfo/json"))
         }
+        if (!(checkData(info))) {
+            throw WmException("Server returned empty data or a wrong json format");
+        }
+        return info
     }
 
-    /*
     private fun checkData(info: JSONInfoData): Boolean {
         // If these are empty there's something wrong, like server returning a json error message or a different data format
-        return (info.isNotEmpty(info.getWmVersion()) && StringUtils.isNotEmpty(info.getWurflApiVersion()) && StringUtils.isNotEmpty(
-            info.getWurflInfo())
-                && (ArrayUtils.isNotEmpty(info.getStaticCaps()) || ArrayUtils.isNotEmpty(info.getVirtualCaps())))
-    }*/
+        return (info.wmVersion.isNotEmpty() && info.wurflApiVersion.isNotEmpty() && info.wurflInfo.isNotEmpty()
+                && (info.staticCaps.isNotEmpty()) || info.virtualCaps.isNotEmpty())
+    }
 }
