@@ -18,6 +18,7 @@ import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
+import java.io.IOException
 
 
 private const val DEVICE_ID_CACHE_TYPE = "dId-cache"
@@ -299,5 +300,30 @@ class WmClient private constructor(
             requestedVirtualCaps = vcapNames.toTypedArray()
         }
         clearCaches()
+    }
+
+    /**
+     * Deallocates all resources used by client. All subsequent usage of client will result in a WmException (you need to create the client again
+     * with a call to WmClient.create().
+     *
+     * @throws WmException In case of closing connection errors.
+     */
+    @Throws(WmException::class)
+    fun destroy() {
+        try {
+            clearCaches()
+            headersCache = null
+            devIDCache = null
+            /*
+            makeModels = null
+            deviceMakesMap = null
+            deviceMakes = null
+            deviceOsVersionsMap = null
+            deviceOSes = null
+            */
+            internalClient.close()
+        } catch (e: IOException) {
+            throw WmException("Unable to close client: " + e.message)
+        }
     }
 }

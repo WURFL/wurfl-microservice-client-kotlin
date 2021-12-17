@@ -12,14 +12,12 @@ limitations under the License.
 */
 package com.scientiamobile.wurfl.wmclient.kotlin
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class WmClientTest {
 
-    @Test fun createAndGetInfoOk() {
+    @Test
+    fun createAndGetInfoOk() {
         val wmclient = WmClient.create("http", "localhost", "8080", "")
         assertNotNull(wmclient)
         val info = wmclient.getInfo()
@@ -30,6 +28,7 @@ class WmClientTest {
         assertTrue { info.importantHeaders.isNotEmpty() }
         assertTrue { info.staticCaps.isNotEmpty() }
         assertTrue { info.virtualCaps.isNotEmpty() }
+        wmclient.destroy()
     }
 
     @Test(expected = WmException::class)
@@ -48,6 +47,32 @@ class WmClientTest {
     }
 
     @Test
+    fun hasStaticCapabilityTest() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        assertNotNull(client)
+        assertTrue(client.hasStaticCapability("brand_name"))
+        assertTrue(client.hasStaticCapability("model_name"))
+        assertTrue(client.hasStaticCapability("is_smarttv"))
+        // this is a virtual capability, so it shouldn't be returned
+        assertFalse(client.hasStaticCapability("is_app"))
+        client.destroy()
+    }
+
+    @Test
+    fun hasVirtualCapabilityTest() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        assertTrue(client.hasVirtualCapability("is_app"))
+        assertTrue(client.hasVirtualCapability("is_smartphone"))
+        assertTrue(client.hasVirtualCapability("form_factor"))
+        assertTrue(client.hasVirtualCapability("is_app_webview"))
+        // this is a static capability, so it shouldn't be returned
+        assertFalse(client.hasVirtualCapability("brand_name"))
+        assertFalse(client.hasVirtualCapability("is_wireless_device"))
+        client.destroy()
+    }
+
+
+    @Test
     @Throws(WmException::class)
     fun lookupUserAgentTest() {
         val ua =
@@ -61,5 +86,23 @@ class WmClientTest {
         assertEquals(capabilities["model_name"], "SM-G950F")
         assertEquals("false", capabilities["is_app"])
         assertEquals("false", capabilities["is_app_webview"])
+        client.destroy()
+    }
+
+    @Test
+    fun destroyClientTest(){
+        var exc = false
+        try{
+            val client = WmClient.create("http", "localhost", "8080", "")
+            client.destroy()
+            // triggering client requests after destroy causes a WM exception or a JobCancellation exception
+            client.getInfo()
+
+        } catch (e: WmException) {
+            exc = true
+        } catch (e: Exception) {
+            exc = true
+        }
+        assertTrue(exc)
     }
 }
