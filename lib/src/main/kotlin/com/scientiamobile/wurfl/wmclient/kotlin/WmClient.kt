@@ -16,6 +16,7 @@ import io.ktor.client.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
+import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 
 
@@ -26,7 +27,7 @@ private const val HEADERS_CACHE_TYPE = "head-cache"
 private const val DEFAULT_CONN_TIMEOUT: Int = 10000
 private const val DEFAULT_RW_TIMEOUT: Int = 60000
 
-class WmClient internal constructor(
+class WmClient private constructor(
     private val scheme: String,
     private val host: String,
     private val port: String,
@@ -75,8 +76,8 @@ class WmClient internal constructor(
     private lateinit var virtualCaps: Array<String>
 
     // Requested are used in the lookup requests
-    private lateinit var requestedStaticCaps: Array<String>
-    private lateinit var requestedVirtualCaps: Array<String>
+    private var requestedStaticCaps: Array<String>? = null
+    private var requestedVirtualCaps: Array<String>? = null
 
     private lateinit var importantHeaders: Array<String>
 
@@ -110,6 +111,15 @@ class WmClient internal constructor(
         return info
     }
 
+    @Throws(WmException::class)
+    fun lookupUseragent(useragent: String): JSONDeviceData {
+        val headers: MutableMap<String, String> = HashMap()
+        headers["User-Agent"] = useragent
+        val request = Request(headers,
+            requestedStaticCaps, requestedVirtualCaps, "")
+        return internalRequest("/v2/lookupuseragent/json", request, HEADERS_CACHE_TYPE)
+    }
+
     fun setCacheSize(uaMaxEntries: Int) {
         this.headersCache = LRUCache(uaMaxEntries)
         devIDCache = LRUCache() // this has the default cache size
@@ -133,5 +143,161 @@ class WmClient internal constructor(
         // If these are empty there's something wrong, like server returning a json error message or a different data format
         return (info.wmVersion.isNotEmpty() && info.wurflApiVersion.isNotEmpty() && info.wurflInfo.isNotEmpty()
                 && (info.staticCaps.isNotEmpty()) || info.virtualCaps.isNotEmpty())
+    }
+
+    @Throws(WmException::class)
+    private fun internalRequest(path: String, request: Request, cacheType: String): JSONDeviceData {
+        var device: JSONDeviceData?
+        var cacheKey: String = ""
+
+        try {
+
+        if (DEVICE_ID_CACHE_TYPE == cacheType) {
+            cacheKey = request.wurflId
+        } else if (HEADERS_CACHE_TYPE == cacheType) {
+            cacheKey = this.getHeadersCacheKey(request.lookupHeaders, cacheType)
+        }
+
+        // First, do a cache lookup
+        if (cacheType.isNotEmpty() && cacheKey.isNotEmpty()) {
+            if (cacheType == DEVICE_ID_CACHE_TYPE && devIDCache != null) {
+                device = request.wurflId.let { devIDCache!!.getEntry(it) }
+                if (device != null) {
+                    return device
+                }
+            } else if (cacheType == HEADERS_CACHE_TYPE && headersCache != null) {
+                device = headersCache!!.getEntry(cacheKey)
+                if (device != null) {
+                    return device
+                }
+            }
+        }
+
+        device = runBlocking {
+            internalClient.post<JSONDeviceData>(createUrl(path)) {
+                contentType(ContentType.Application.Json)
+                body = request
+            }
+        }
+
+            // Check if caches must be cleared before adding a new device
+            clearCachesIfNeeded(device.ltime)
+            if (cacheType == HEADERS_CACHE_TYPE && devIDCache != null && "" != cacheKey) {
+                headersCache?.putEntry(cacheKey, device)
+            } else if (cacheType == DEVICE_ID_CACHE_TYPE && headersCache != null && "" != cacheKey) {
+                devIDCache?.putEntry(cacheKey, device)
+            }
+            return device
+        } catch (e: Exception) {
+            throw WmException("Unable to complete request to WM server: " + e.message)
+        }
+    }
+
+    private fun getHeadersCacheKey(headers: Map<String, String>, cacheType: String): String {
+        var key = ""
+
+        if (headers.isEmpty() && HEADERS_CACHE_TYPE == cacheType) {
+            throw WmException("You must provide at least on headers (the 'User-Agent')")
+        }
+
+        // Using important headers array preserves header name order
+
+        // Using important headers array preserves header name order
+        for (h in importantHeaders) {
+            val hval = headers[h]
+            if (hval != null) {
+                key += hval
+            }
+        }
+        return key
+    }
+
+    private fun clearCachesIfNeeded(ltime: String?) {
+        if (ltime != null && ltime != this.ltime) {
+            this.ltime = ltime
+            clearCaches()
+        }
+    }
+
+    private fun clearCaches() {
+        headersCache?.clear()
+        devIDCache?.clear()
+
+        // TODO: uncomment when introducing WM data enumerators
+        /*
+        makeModels = arrayOfNulls<JSONMakeModel>(0)
+        deviceMakes = arrayOfNulls<String>(0)
+        deviceMakesMap = HashMap<String, List<JSONModelMktName>>()
+        synchronized(deviceOSesLock) {
+            deviceOSes = arrayOfNulls<String>(0)
+            deviceOsVersionsMap = HashMap<String, List<String>>()
+        }*/
+    }
+
+    fun setRequestedStaticCapabilities(capsList: Array<String>?) {
+        if (capsList == null) {
+            requestedStaticCaps = null
+            this.clearCaches()
+            return
+        }
+        val stCaps: MutableList<String> = ArrayList()
+        for (name in capsList) {
+            if (hasStaticCapability(name)) {
+                stCaps.add(name)
+            }
+        }
+        requestedStaticCaps = stCaps.toTypedArray()
+        clearCaches()
+    }
+
+    fun setRequestedVirtualCapabilities(vcapsList: Array<String>?) {
+        if (vcapsList == null) {
+            requestedVirtualCaps = null
+            this.clearCaches()
+            return
+        }
+        val vCaps: MutableList<String> = ArrayList()
+        for (name in vcapsList) {
+            if (hasVirtualCapability(name)) {
+                vCaps.add(name)
+            }
+        }
+        requestedVirtualCaps = vCaps.toTypedArray()
+        clearCaches()
+    }
+
+    /**
+     * @param capName capability name
+     * @return true if the given static capability is handled by this client, false otherwise
+     */
+    fun hasStaticCapability(capName: String?): Boolean {
+        return staticCaps.contains(capName)
+    }
+
+    /**
+     * @param capName capability name
+     * @return true if the given virtual capability is handled by this client, false otherwise
+     */
+    fun hasVirtualCapability(capName: String?): Boolean {
+        return virtualCaps.contains(capName)
+    }
+
+    fun setRequestedCapabilities(capsList: Array<String>) {
+        val capNames: MutableList<String> = ArrayList()
+        val vcapNames: MutableList<String> = ArrayList()
+        for (name in capsList) {
+            if (hasStaticCapability(name)) {
+                capNames.add(name)
+            } else if (hasVirtualCapability(name)) {
+                vcapNames.add(name)
+            }
+        }
+        if (capsList.isNotEmpty()) {
+            requestedStaticCaps = capNames.toTypedArray()
+        }
+        if (vcapNames.isNotEmpty()) {
+            requestedVirtualCaps = vcapNames.toTypedArray()
+        }
+        clearCaches()
     }
 }

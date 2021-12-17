@@ -45,6 +45,19 @@ data class JSONDeviceData(
     val ltime: String? = null)
 
 /**
+ * Holds data relevant for the HTTP request that will be sent to wm server
+ */
+data class Request(
+    @SerializedName("lookup_headers")
+    val lookupHeaders: Map<String, String>,
+    @SerializedName("requested_caps")
+    val requestedCaps: Array<String>?,
+    @SerializedName("requested_vcaps")
+    val requestedVcaps: Array<String>?,
+    @SerializedName("wurfl_id")
+    val wurflId:String)
+
+/**
  * WmException is a general purpose exception thrown whenever an unrecoverable error occurs during device detection (ie: no connection available to WM server,
  * wrong url or port configurations, etc.
  */

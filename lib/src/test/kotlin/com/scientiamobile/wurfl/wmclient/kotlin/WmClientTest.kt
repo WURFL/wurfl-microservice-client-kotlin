@@ -13,6 +13,7 @@ limitations under the License.
 package com.scientiamobile.wurfl.wmclient.kotlin
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -44,5 +45,21 @@ class WmClientTest {
     @Test(expected = WmException::class)
     fun createWithServerDownTest() {
         WmClient.create("http", "localhost", "18080", "")
+    }
+
+    @Test
+    @Throws(WmException::class)
+    fun lookupUserAgentTest() {
+        val ua =
+            "Mozilla/5.0 (Linux; Android 7.0; SAMSUNG SM-G950F Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/5.2 Chrome/51.0.2704.106 Mobile Safari/537.36"
+        val client = WmClient.create("http", "localhost", "8080", "")
+        val device: JSONDeviceData = client.lookupUseragent(ua)
+        assertNotNull(device)
+        val capabilities = device.capabilities
+        val dcount = capabilities.size
+        assertTrue(dcount >= 40)
+        assertEquals(capabilities["model_name"], "SM-G950F")
+        assertEquals("false", capabilities["is_app"])
+        assertEquals("false", capabilities["is_app_webview"])
     }
 }
