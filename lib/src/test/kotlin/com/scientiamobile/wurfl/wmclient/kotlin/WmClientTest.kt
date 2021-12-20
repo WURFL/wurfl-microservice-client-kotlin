@@ -73,7 +73,6 @@ class WmClientTest {
 
 
     @Test
-    @Throws(WmException::class)
     fun lookupUserAgentTest() {
         val ua =
             "Mozilla/5.0 (Linux; Android 7.0; SAMSUNG SM-G950F Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/5.2 Chrome/51.0.2704.106 Mobile Safari/537.36"
@@ -90,7 +89,6 @@ class WmClientTest {
     }
 
     @Test
-    @Throws(WmException::class)
     fun lookupUserAgentWithSpecificCapsTest() {
         val client = WmClient.create("http", "localhost", "8080", "")
         val reqCaps =
@@ -122,7 +120,6 @@ class WmClientTest {
     }
 
     @Test
-    @Throws(WmException::class)
     fun lookupDeviceIdTest() {
         val client = WmClient.create("http", "localhost", "8080", "")
         val device: JSONDeviceData = client.lookupDeviceId("nokia_generic_series40")
@@ -134,6 +131,52 @@ class WmClientTest {
         assertEquals("false", capabilities["is_android"])
         assertEquals("128", capabilities["resolution_width"])
         client.destroy()
+    }
+
+    @Test
+    fun lookupDeviceIdWithSpecificCaps() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        val reqCaps = arrayOf("brand_name", "is_smarttv")
+        val reqvCaps = arrayOf("is_app", "is_app_webview")
+        client.setRequestedStaticCapabilities(reqCaps)
+        client.setRequestedVirtualCapabilities(reqvCaps)
+        val device: JSONDeviceData = client.lookupDeviceId("generic_opera_mini_version1")
+        assertNotNull(device)
+        val capabilities = device.capabilities
+        assertNotNull(capabilities)
+        assertEquals("Opera", capabilities["brand_name"])
+        assertEquals("false", capabilities["is_smarttv"])
+        assertEquals(5, capabilities.size)
+        client.destroy()
+    }
+
+    @Test
+    fun lookupDeviceIdWithWrongIdTest() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        var exc = false
+        try {
+            // this ID does not exist
+            val device = client.lookupDeviceId("nokia_generic_series40_wrong")
+            println(device.capabilities["wurfl_id"])
+
+        } catch (e: WmException) {
+            exc = true
+            assertTrue(e.message!!.contains("device is missing"))
+        }
+        assertTrue(exc)
+    }
+
+    @Test
+    fun lookupDeviceIdWithEmptyIdTest() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        var exc = false
+        try {
+            client.lookupDeviceId("")
+        } catch (e: WmException) {
+            exc = true
+            assertTrue(e.message!!.contains("device is missing"))
+        }
+        assertTrue(exc)
     }
 
     @Test

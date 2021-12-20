@@ -195,6 +195,10 @@ class WmClient private constructor(
             }
         }
 
+            if (device.error.isNotEmpty()) {
+                throw WmException("Unable to complete request to WM server:  $device.error")
+            }
+
             // Check if caches must be cleared before adding a new device
             clearCachesIfNeeded(device.ltime)
             if (cacheType == HEADERS_CACHE_TYPE && devIDCache != null && "" != cacheKey) {
