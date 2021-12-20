@@ -39,6 +39,11 @@ dependencies {
     implementation("io.ktor:ktor-client-gson:$ktorVersion")
     implementation("io.ktor:ktor-gson:$ktorVersion")
 
+    // test mocks
+    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
+
+
+
 
     // Use the Kotlin test library.
     testImplementation("org.jetbrains.kotlin:kotlin-test")

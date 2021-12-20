@@ -12,9 +12,22 @@ limitations under the License.
 */
 package com.scientiamobile.wurfl.wmclient.kotlin
 
+import io.ktor.http.*
+import io.ktor.server.testing.*
 import kotlin.test.*
 
+
 class WmClientTest {
+
+
+    //
+    private val MOCK_REQUEST_UA =
+        "Mozilla/5.0 (Nintendo Switch; WebApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341"
+    private val MOCK_REQUEST_X_UC_BROWSER =
+        "Mozilla/5.0 (Nintendo Switch; ShareApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341"
+    private val MOCK_REQUEST_DEVICE_STOCK_UA =
+        "Mozilla/5.0 (Nintendo Switch; WifiWebAuthApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341"
+
 
     @Test
     fun createAndGetInfoOk() {
@@ -177,6 +190,37 @@ class WmClientTest {
             assertTrue(e.message!!.contains("device is missing"))
         }
         assertTrue(exc)
+    }
+
+    @Test
+    fun lookupRequestTestOk(){
+
+        val client = WmClient.create("http", "localhost", "8080", "")
+        withTestApplication {
+
+            val callMock = createCall {
+                addHeader("User-Agent", MOCK_REQUEST_UA)
+                addHeader("Device-Stock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
+                addHeader("X-UCBrowser-Device-UA", MOCK_REQUEST_X_UC_BROWSER)
+                addHeader("Device-Stock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
+                addHeader("Content-Type", ContentType.Application.Json.contentType)
+                addHeader("Accept-Encoding", "gzip, deflate")
+            }
+
+            val device = client.lookupRequest(callMock.request)
+            val capabilities = device.capabilities
+            assertNotNull(capabilities)
+            assertTrue(capabilities.size >= 40)
+            assertEquals("Smart-TV", capabilities.get("form_factor"))
+            assertEquals("5.1.0.13341", capabilities.get("advertised_browser_version"))
+            assertEquals("false", capabilities.get("is_app"))
+            assertEquals("false", capabilities.get("is_app_webview"))
+            assertEquals("Nintendo", capabilities.get("advertised_device_os"))
+            assertEquals("Nintendo Switch", capabilities.get("complete_device_name"))
+            assertEquals("nintendo_switch_ver1", capabilities.get("wurfl_id"))
+        }
+
+
     }
 
     @Test

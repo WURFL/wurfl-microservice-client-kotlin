@@ -17,6 +17,7 @@ import io.ktor.client.engine.apache.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import io.ktor.request.*
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 
@@ -133,6 +134,27 @@ class WmClient private constructor(
         val request = Request(emptyMap(),
             requestedStaticCaps, requestedVirtualCaps, wurflId)
         return internalRequest("/v2/lookupdeviceid/json", request, DEVICE_ID_CACHE_TYPE)
+    }
+
+    /**
+     * Performs a device detection using an HTTP request object, as passed from Java Web applications
+     *
+     * @param ktorRequest an instance of Ktor framework ApplicationRequest object
+     * @return An object containing the device capabilities
+     * @throws WmException In case any error occurs during device detection
+     */
+    @Throws(WmException::class)
+    fun lookupRequest(ktorRequest: ApplicationRequest): JSONDeviceData {
+
+        val reqHeaders: MutableMap<String, String> = HashMap()
+        for (headerName in importantHeaders) {
+            val headerValue: String? = ktorRequest.headers[headerName]
+            if (headerValue!= null && headerValue.isNotEmpty()) {
+                reqHeaders[headerName] = headerValue
+            }
+        }
+        return internalRequest("/v2/lookuprequest/json", Request(reqHeaders, requestedStaticCaps,
+            requestedVirtualCaps, ""), HEADERS_CACHE_TYPE)
     }
 
     fun setCacheSize(uaMaxEntries: Int) {
