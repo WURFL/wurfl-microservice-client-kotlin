@@ -32,7 +32,7 @@ class WmClientTest {
     }
 
     @Test(expected = WmException::class)
-    fun TestCreateWithEmptyServerValues() {
+    fun createWithEmptyServerValuesTest() {
         WmClient.create("", "", "", "")
     }
 
@@ -86,6 +86,53 @@ class WmClientTest {
         assertEquals(capabilities["model_name"], "SM-G950F")
         assertEquals("false", capabilities["is_app"])
         assertEquals("false", capabilities["is_app_webview"])
+        client.destroy()
+    }
+
+    @Test
+    @Throws(WmException::class)
+    fun lookupUserAgentWithSpecificCapsTest() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        val reqCaps =
+            arrayOf("brand_name", "model_name", "physical_screen_width", "device_os", "is_android", "is_ios", "is_app")
+        client.setRequestedCapabilities(reqCaps)
+        val ua =
+            "Mozilla/5.0 (Nintendo Switch; WebApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341"
+        val device: JSONDeviceData = client.lookupUseragent(ua)
+        val capabilities = device.capabilities
+        assertNotNull(device)
+        assertNotNull(capabilities)
+        assertEquals("Nintendo", capabilities["brand_name"])
+        assertEquals("Switch", capabilities["model_name"])
+        assertEquals("false", capabilities["is_android"])
+        assertEquals(8, capabilities.size)
+        client.destroy()
+    }
+
+    @Test
+    fun lookupUseragentEmptyUaTest() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        try {
+            val device: JSONDeviceData = client.lookupUseragent("")
+            assertNotNull(device)
+            assertEquals(device.capabilities["wurfl_id"], "generic")
+        } catch (e: WmException) {
+            fail(e.message)
+        }
+    }
+
+    @Test
+    @Throws(WmException::class)
+    fun lookupDeviceIdTest() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        val device: JSONDeviceData = client.lookupDeviceId("nokia_generic_series40")
+        assertNotNull(device)
+        val capabilities = device.capabilities
+        assertNotNull(capabilities)
+        // num caps + num vcaps + wurfl id
+        assertTrue(capabilities.size >= 40)
+        assertEquals("false", capabilities["is_android"])
+        assertEquals("128", capabilities["resolution_width"])
         client.destroy()
     }
 

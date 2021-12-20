@@ -121,6 +121,20 @@ class WmClient private constructor(
         return internalRequest("/v2/lookupuseragent/json", request, HEADERS_CACHE_TYPE)
     }
 
+    /**
+     * Returns the device matching the given WURFL ID
+     *
+     * @param wurflId a WURFL device identifier
+     * @return An object containing the device capabilities
+     * @throws WmException In case any error occurs
+     */
+    @Throws(WmException::class)
+    fun lookupDeviceId(wurflId: String): JSONDeviceData {
+        val request = Request(emptyMap(),
+            requestedStaticCaps, requestedVirtualCaps, wurflId)
+        return internalRequest("/v2/lookupdeviceid/json", request, DEVICE_ID_CACHE_TYPE)
+    }
+
     fun setCacheSize(uaMaxEntries: Int) {
         this.headersCache = LRUCache(uaMaxEntries)
         devIDCache = LRUCache() // this has the default cache size
@@ -149,7 +163,7 @@ class WmClient private constructor(
     @Throws(WmException::class)
     private fun internalRequest(path: String, request: Request, cacheType: String): JSONDeviceData {
         var device: JSONDeviceData?
-        var cacheKey: String = ""
+        var cacheKey = ""
 
         try {
 
@@ -283,9 +297,15 @@ class WmClient private constructor(
         return virtualCaps.contains(capName)
     }
 
-    fun setRequestedCapabilities(capsList: Array<String>) {
+    fun setRequestedCapabilities(capsList: Array<String>?) {
         val capNames: MutableList<String> = ArrayList()
         val vcapNames: MutableList<String> = ArrayList()
+        if (capsList == null){
+            requestedStaticCaps = null
+            requestedVirtualCaps = null
+            return
+        }
+
         for (name in capsList) {
             if (hasStaticCapability(name)) {
                 capNames.add(name)
