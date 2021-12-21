@@ -336,17 +336,52 @@ class WmClientTest {
     }
 
     @Test
-    @Throws(WmException::class)
-    fun LookupHeadersOKTest() {
+    fun lookupHeadersOKTest() {
 
         val client = WmClient.create("http", "localhost", "8080", "")
-        val headers: MutableMap<String, String> = HashMap()
-        headers["User-Agent"] = MOCK_REQUEST_UA
-        headers["Content-Type"] = "gzip, deflate"
-        headers["Accept-Encoding"] = "application/json"
-        headers["X-UCBrowser-Device-UA"] = MOCK_REQUEST_X_UC_BROWSER
-        headers["Device-Stock-UA"] = MOCK_REQUEST_DEVICE_STOCK_UA
+        val headers: Map<String, String> = createTestHeaders(false)
         val device: JSONDeviceData = client.lookupHeaders(headers)
+        val capabilities = device.capabilities
+        assertNotNull(capabilities)
+        assertTrue(capabilities.size >= 40)
+        assertEquals("Smart-TV", capabilities["form_factor"])
+        assertEquals("5.1.0.13341", capabilities["advertised_browser_version"])
+        assertEquals("false", capabilities["is_app"])
+        assertEquals("false", capabilities["is_app_webview"])
+        assertEquals("Nintendo", capabilities["advertised_device_os"])
+        assertEquals("Nintendo Switch", capabilities["complete_device_name"])
+        assertEquals("nintendo_switch_ver1", capabilities["wurfl_id"])
+        client.destroy()
+    }
+
+    private fun createTestHeaders(useMixedCase: Boolean): Map<String, String> {
+
+        if (useMixedCase) {
+            return mapOf(
+                "User-AGenT" to
+                        "Mozilla/5.0 (Nintendo Switch; WebApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341",
+                "Content-TYPe" to "gzip, deflate",
+                "Accept-EnCoding" to "application/json",
+                "X-UCBrowsEr-Device-UA" to
+                        "Mozilla/5.0 (Nintendo Switch; ShareApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341",
+                "Device-StOck-UA" to
+                        "Mozilla/5.0 (Nintendo Switch; WifiWebAuthApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341")
+        }
+
+        return mapOf("User-Agent" to MOCK_REQUEST_UA,
+            "Content-Type" to "gzip, deflate",
+            "Accept-Encoding" to "application/json",
+            "X-UCBrowser-Device-UA" to MOCK_REQUEST_X_UC_BROWSER,
+            "Device-Stock-UA" to MOCK_REQUEST_DEVICE_STOCK_UA)
+    }
+
+    @Test
+    fun lookupHeadersWithMixedCaseTest() {
+
+        val client = WmClient.create("http", "localhost", "8080", "")
+        val headers: Map<String, String> = createTestHeaders(true)
+        val device: JSONDeviceData = client.lookupHeaders(headers)
+        assertNotNull(device)
         val capabilities = device.capabilities
         assertNotNull(capabilities)
         assertTrue(capabilities.size >= 40)
@@ -361,6 +396,42 @@ class WmClientTest {
 
     @Test
     @Throws(WmException::class)
+    fun lookupHeadersWithMixedCaseAndCachedClientTest() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        client.setCacheSize(1000)
+        var headers: Map<String, String> = createTestHeaders(true)
+        var device = client.lookupHeaders(headers)
+        var capabilities: Map<String, String> = device.capabilities
+        assertNotNull(capabilities)
+        assertTrue(capabilities.size >= 40)
+        assertEquals("Smart-TV", capabilities["form_factor"])
+        assertEquals("5.1.0.13341", capabilities["advertised_browser_version"])
+        assertEquals("false", capabilities["is_app"])
+        assertEquals("false", capabilities["is_app_webview"])
+        assertEquals("Nintendo", capabilities["advertised_device_os"])
+        assertEquals("Nintendo Switch", capabilities["complete_device_name"])
+        assertEquals("nintendo_switch_ver1", capabilities["wurfl_id"])
+        var cacheSize = client.getActualCacheSizes()
+        assertEquals(cacheSize.second, 1)
+
+        // Now mix headers case in a different way (we should hit the cache now)
+        headers = mapOf(
+        "UseR-AGenT" to MOCK_REQUEST_UA,
+        "ConTent-TYPe" to "gzip, deflate",
+        "AccEpt-EnCoding" to "application/json",
+        "X-UCbrowsEr-DeviCe-UA" to MOCK_REQUEST_X_UC_BROWSER,
+        "DevIce-StOck-Ua" to MOCK_REQUEST_DEVICE_STOCK_UA)
+        device = client.lookupHeaders(headers)
+        capabilities = device.capabilities
+        assertNotNull(capabilities)
+        assertEquals("nintendo_switch_ver1", capabilities["wurfl_id"])
+        // Cache size should stay 1, which means that previously stored cache value has been hit even if header case has been changed
+        cacheSize = client.getActualCacheSizes()
+        assertEquals(cacheSize.second, 1)
+        client.destroy()
+    }
+
+    @Test
     fun setRequestedCapabilitiesTest() {
         val client = WmClient.create("http", "localhost", "8080", "")
         client.setCacheSize(1000)
