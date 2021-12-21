@@ -20,7 +20,7 @@ import kotlin.test.*
 class WmClientTest {
 
 
-    //
+    // Test values for lookupRequest tests
     private val MOCK_REQUEST_UA =
         "Mozilla/5.0 (Nintendo Switch; WebApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341"
     private val MOCK_REQUEST_X_UC_BROWSER =
@@ -50,7 +50,7 @@ class WmClientTest {
     }
 
     @Test(expected = WmException::class)
-    fun testCreateWithoutHostTest(){
+    fun testCreateWithoutHostTest() {
         WmClient.create("http", "", "8080", "")
     }
 
@@ -193,7 +193,7 @@ class WmClientTest {
     }
 
     @Test
-    fun lookupRequestTestOk(){
+    fun lookupRequestTestOk() {
 
         val client = WmClient.create("http", "localhost", "8080", "")
         withTestApplication {
@@ -219,14 +219,64 @@ class WmClientTest {
             assertEquals("Nintendo Switch", capabilities.get("complete_device_name"))
             assertEquals("nintendo_switch_ver1", capabilities.get("wurfl_id"))
         }
-
-
+        client.destroy()
     }
 
     @Test
-    fun destroyClientTest(){
+    fun lookupRequestOkWithSpecificCaps() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        val reqCaps = arrayOf("is_mobile", "form_factor", "is_app", "complete_device_name",
+            "advertised_device_os", "brand_name")
+        client.setRequestedCapabilities(reqCaps)
+
+        withTestApplication {
+
+            val callMock = createCall {
+                addHeader("User-Agent", MOCK_REQUEST_UA)
+                addHeader("Device-Stock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
+                addHeader("X-UCBrowser-Device-UA", MOCK_REQUEST_X_UC_BROWSER)
+                addHeader("Device-Stock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
+                addHeader("Content-Type", ContentType.Application.Json.contentType)
+                addHeader("Accept-Encoding", "gzip, deflate")
+            }
+
+            val device = client.lookupRequest(callMock.request)
+            val capabilities = device.capabilities
+            assertNotNull(capabilities)
+            assertEquals(7, capabilities.size)
+            assertEquals("false", capabilities["is_app"])
+            assertEquals("Nintendo", capabilities["advertised_device_os"])
+            assertEquals("Nintendo Switch", capabilities["complete_device_name"])
+            assertEquals("nintendo_switch_ver1", capabilities["wurfl_id"])
+        }
+        client.destroy()
+    }
+
+    @Test
+    fun lookupRequestWithSpecificCapsAndNoHeadersTest() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        val reqCaps = arrayOf("is_mobile", "form_factor", "is_app", "complete_device_name",
+            "advertised_device_os", "brand_name")
+        client.setRequestedCapabilities(reqCaps)
+
+        withTestApplication {
+
+
+            // this will create a test application request with an empty headers map
+            val callMock = createCall {}
+            val device = client.lookupRequest(callMock.request)
+            val capabilities = device.capabilities
+            assertNotNull(capabilities)
+            assertEquals(7, capabilities.size)
+            assertEquals("generic", capabilities["wurfl_id"])
+        }
+        client.destroy()
+    }
+
+    @Test
+    fun destroyClientTest() {
         var exc = false
-        try{
+        try {
             val client = WmClient.create("http", "localhost", "8080", "")
             client.destroy()
             // triggering client requests after destroy causes a WM exception or a JobCancellation exception

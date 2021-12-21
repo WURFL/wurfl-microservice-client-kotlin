@@ -192,7 +192,7 @@ class WmClient private constructor(
         if (DEVICE_ID_CACHE_TYPE == cacheType) {
             cacheKey = request.wurflId
         } else if (HEADERS_CACHE_TYPE == cacheType) {
-            cacheKey = this.getHeadersCacheKey(request.lookupHeaders, cacheType)
+            cacheKey = this.getHeadersCacheKey(request.lookupHeaders)
         }
 
         // First, do a cache lookup
@@ -234,14 +234,8 @@ class WmClient private constructor(
         }
     }
 
-    private fun getHeadersCacheKey(headers: Map<String, String>, cacheType: String): String {
+    private fun getHeadersCacheKey(headers: Map<String, String>): String {
         var key = ""
-
-        if (headers.isEmpty() && HEADERS_CACHE_TYPE == cacheType) {
-            throw WmException("You must provide at least on headers (the 'User-Agent')")
-        }
-
-        // Using important headers array preserves header name order
 
         // Using important headers array preserves header name order
         for (h in importantHeaders) {
