@@ -20,6 +20,7 @@ import io.ktor.http.*
 import io.ktor.request.*
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
+import java.util.*
 
 
 private const val DEVICE_ID_CACHE_TYPE = "dId-cache"
@@ -155,6 +156,29 @@ class WmClient private constructor(
         }
         return internalRequest("/v2/lookuprequest/json", Request(reqHeaders, requestedStaticCaps,
             requestedVirtualCaps, ""), HEADERS_CACHE_TYPE)
+    }
+
+    /**
+     * Performs a device detection using an HTTP request object, as passed from Java Web applications
+     *
+     * @param headers headers map
+     * @return An object containing the device capabilities
+     * @throws WmException In case any error occurs during device detection
+     */
+    @Throws(WmException::class)
+    fun lookupHeaders(headers: Map<String, String>): JSONDeviceData {
+
+        // creates a map with lowercase keys
+        val lowerKeyMap = headers.mapKeys { it.key.lowercase(Locale.getDefault()) }
+        val reqHeaders = HashMap<String,String>()
+        for (headerName in importantHeaders) {
+            val headerValue = lowerKeyMap[headerName.lowercase(Locale.getDefault())]
+            if (headerValue != null && headerValue.isNotEmpty()) {
+                reqHeaders[headerName] = headerValue
+            }
+        }
+        return internalRequest("/v2/lookuprequest/json",
+            Request(reqHeaders, requestedStaticCaps, requestedVirtualCaps, ""), HEADERS_CACHE_TYPE)
     }
 
     fun setCacheSize(uaMaxEntries: Int) {

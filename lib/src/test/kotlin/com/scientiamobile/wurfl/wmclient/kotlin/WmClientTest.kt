@@ -14,6 +14,7 @@ package com.scientiamobile.wurfl.wmclient.kotlin
 
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import java.util.*
 import kotlin.test.*
 
 
@@ -274,7 +275,7 @@ class WmClientTest {
     }
 
     @Test
-    fun lookupRequestWithCacheTest(){
+    fun lookupRequestWithCacheTest() {
         val client = WmClient.create("http", "localhost", "8080", "")
         client.setCacheSize(1000)
 
@@ -296,7 +297,7 @@ class WmClientTest {
                 assertEquals("Nintendo", capabilities["brand_name"])
                 assertEquals("true", capabilities["is_mobile"])
                 assertTrue(capabilities.size >= 40)
-                val cacheSize  = client.getActualCacheSizes()
+                val cacheSize = client.getActualCacheSizes()
                 assertEquals(cacheSize.first, 0)
                 assertEquals(cacheSize.second, 1)
             }
@@ -332,6 +333,30 @@ class WmClientTest {
             assertEquals("nintendo_switch_ver1", capabilities.get("wurfl_id"))
         }
         client.destroy()
+    }
+
+    @Test
+    @Throws(WmException::class)
+    fun LookupHeadersOKTest() {
+
+        val client = WmClient.create("http", "localhost", "8080", "")
+        val headers: MutableMap<String, String> = HashMap()
+        headers["User-Agent"] = MOCK_REQUEST_UA
+        headers["Content-Type"] = "gzip, deflate"
+        headers["Accept-Encoding"] = "application/json"
+        headers["X-UCBrowser-Device-UA"] = MOCK_REQUEST_X_UC_BROWSER
+        headers["Device-Stock-UA"] = MOCK_REQUEST_DEVICE_STOCK_UA
+        val device: JSONDeviceData = client.lookupHeaders(headers)
+        val capabilities = device.capabilities
+        assertNotNull(capabilities)
+        assertTrue(capabilities.size >= 40)
+        assertEquals("Smart-TV", capabilities["form_factor"])
+        assertEquals("5.1.0.13341", capabilities["advertised_browser_version"])
+        assertEquals("false", capabilities["is_app"])
+        assertEquals("false", capabilities["is_app_webview"])
+        assertEquals("Nintendo", capabilities["advertised_device_os"])
+        assertEquals("Nintendo Switch", capabilities["complete_device_name"])
+        assertEquals("nintendo_switch_ver1", capabilities["wurfl_id"])
     }
 
     @Test
