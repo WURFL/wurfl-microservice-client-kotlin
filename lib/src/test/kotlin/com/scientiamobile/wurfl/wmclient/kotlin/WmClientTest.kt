@@ -274,6 +274,93 @@ class WmClientTest {
     }
 
     @Test
+    fun lookupRequestWithCacheTest(){
+        val client = WmClient.create("http", "localhost", "8080", "")
+        client.setCacheSize(1000)
+
+        withTestApplication {
+
+            val callMock = createCall {
+                addHeader("User-Agent", MOCK_REQUEST_UA)
+                addHeader("Device-Stock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
+                addHeader("X-UCBrowser-Device-UA", MOCK_REQUEST_X_UC_BROWSER)
+                addHeader("Device-Stock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
+                addHeader("Content-Type", ContentType.Application.Json.contentType)
+                addHeader("Accept-Encoding", "gzip, deflate")
+            }
+
+            for (i in 0..49) {
+                val device = client.lookupRequest(callMock.request)
+                val capabilities = device.capabilities
+                assertNotNull(capabilities)
+                assertEquals("Nintendo", capabilities["brand_name"])
+                assertEquals("true", capabilities["is_mobile"])
+                assertTrue(capabilities.size >= 40)
+                val cacheSize  = client.getActualCacheSizes()
+                assertEquals(cacheSize.first, 0)
+                assertEquals(cacheSize.second, 1)
+            }
+        }
+        client.destroy()
+    }
+
+    @Test
+    fun lookupRequestWithMixedCaseHeadersTest() {
+
+        val client = WmClient.create("http", "localhost", "8080", "")
+        withTestApplication {
+
+            val callMock = createCall {
+                addHeader("uSer-AgeNt", MOCK_REQUEST_UA)
+                addHeader("device-sTock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
+                addHeader("X-UCBroWser-DevicE-uA", MOCK_REQUEST_X_UC_BROWSER)
+                addHeader("Device-stOCk-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
+                addHeader("ContenT-TypE", ContentType.Application.Json.contentType)
+                addHeader("aCcept-EnCodIng", "gzip, deflate")
+            }
+
+            val device = client.lookupRequest(callMock.request)
+            val capabilities = device.capabilities
+            assertNotNull(capabilities)
+            assertTrue(capabilities.size >= 40)
+            assertEquals("Smart-TV", capabilities.get("form_factor"))
+            assertEquals("5.1.0.13341", capabilities.get("advertised_browser_version"))
+            assertEquals("false", capabilities.get("is_app"))
+            assertEquals("false", capabilities.get("is_app_webview"))
+            assertEquals("Nintendo", capabilities.get("advertised_device_os"))
+            assertEquals("Nintendo Switch", capabilities.get("complete_device_name"))
+            assertEquals("nintendo_switch_ver1", capabilities.get("wurfl_id"))
+        }
+        client.destroy()
+    }
+
+    @Test
+    @Throws(WmException::class)
+    fun setRequestedCapabilitiesTest() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        client.setCacheSize(1000)
+        client.setRequestedStaticCapabilities(arrayOf("wrong1", "brand_name", "is_ios"))
+        client.setRequestedVirtualCapabilities(arrayOf("wrong2", "brand_name", "is_ios"))
+        val ua =
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Version/10.0 Mobile/14D27 Safari/602.1"
+        var d = client.lookupUseragent(ua)
+        assertNotNull(d)
+        assertEquals(d.capabilities.size, 3)
+        assertNull(d.capabilities["wrong1"])
+
+        // This will reset static caps
+        client.setRequestedStaticCapabilities(null)
+        d = client.lookupUseragent(ua)
+        assertEquals(d.capabilities.size, 2)
+        // If all required caps arrays are reset, ALL caps are returned
+        client.setRequestedVirtualCapabilities(null)
+        d = client.lookupUseragent(ua)
+        val capsize: Int = d.capabilities.size
+        assertTrue(capsize >= 40)
+        client.destroy()
+    }
+
+    @Test
     fun destroyClientTest() {
         var exc = false
         try {
