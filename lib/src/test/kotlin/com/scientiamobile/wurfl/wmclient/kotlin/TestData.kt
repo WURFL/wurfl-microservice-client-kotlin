@@ -16,7 +16,7 @@ limitations under the License.
 package com.scientiamobile.wurfl.wmclient.kotlin
 
 object TestData {
-   private val USER_AGENTS = arrayOf(
+   internal val USER_AGENTS = arrayOf(
       "5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36 ASXACT12779",
       "97718A_ABROAD/V1 Linux/3.4.5 Android/4.2.2 Release/05.02.2013 Browser/AppleWebKit534.30 Mobile Safari/534.30 MBBMS/2.2;",
       "A1034/1.0 Browser/Obigo/Q03C Profile",

@@ -16,6 +16,7 @@ import io.ktor.http.*
 import io.ktor.server.testing.*
 import kotlin.reflect.full.functions
 import kotlin.reflect.jvm.isAccessible
+import kotlin.system.measureNanoTime
 import kotlin.test.*
 
 
@@ -63,7 +64,7 @@ class WmClientTest {
 
     @Test
     fun hasStaticCapabilityTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         assertNotNull(client)
         assertTrue(client.hasStaticCapability("brand_name"))
         assertTrue(client.hasStaticCapability("model_name"))
@@ -75,7 +76,7 @@ class WmClientTest {
 
     @Test
     fun hasVirtualCapabilityTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         assertTrue(client.hasVirtualCapability("is_app"))
         assertTrue(client.hasVirtualCapability("is_smartphone"))
         assertTrue(client.hasVirtualCapability("form_factor"))
@@ -91,7 +92,7 @@ class WmClientTest {
     fun lookupUserAgentTest() {
         val ua =
             "Mozilla/5.0 (Linux; Android 7.0; SAMSUNG SM-G950F Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/5.2 Chrome/51.0.2704.106 Mobile Safari/537.36"
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         val device: JSONDeviceData = client.lookupUseragent(ua)
         assertNotNull(device)
         val capabilities = device.capabilities
@@ -105,7 +106,7 @@ class WmClientTest {
 
     @Test
     fun lookupUserAgentWithSpecificCapsTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         val reqCaps =
             arrayOf("brand_name", "model_name", "physical_screen_width", "device_os", "is_android", "is_ios", "is_app")
         client.setRequestedCapabilities(reqCaps)
@@ -124,7 +125,7 @@ class WmClientTest {
 
     @Test
     fun lookupUseragentEmptyUaTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         try {
             val device: JSONDeviceData = client.lookupUseragent("")
             assertNotNull(device)
@@ -136,7 +137,7 @@ class WmClientTest {
 
     @Test
     fun lookupDeviceIdTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         val device: JSONDeviceData = client.lookupDeviceId("nokia_generic_series40")
         assertNotNull(device)
         val capabilities = device.capabilities
@@ -150,7 +151,7 @@ class WmClientTest {
 
     @Test
     fun lookupDeviceIdWithSpecificCaps() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         val reqCaps = arrayOf("brand_name", "is_smarttv")
         val reqvCaps = arrayOf("is_app", "is_app_webview")
         client.setRequestedStaticCapabilities(reqCaps)
@@ -167,7 +168,7 @@ class WmClientTest {
 
     @Test
     fun lookupDeviceIdWithWrongIdTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         var exc = false
         try {
             // this ID does not exist
@@ -183,7 +184,7 @@ class WmClientTest {
 
     @Test
     fun lookupDeviceIdWithEmptyIdTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         var exc = false
         try {
             client.lookupDeviceId("")
@@ -197,7 +198,7 @@ class WmClientTest {
     @Test
     fun lookupRequestTestOk() {
 
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         withTestApplication {
 
             val callMock = createCall {
@@ -226,7 +227,7 @@ class WmClientTest {
 
     @Test
     fun lookupRequestOkWithSpecificCaps() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         val reqCaps = arrayOf("is_mobile", "form_factor", "is_app", "complete_device_name",
             "advertised_device_os", "brand_name")
         client.setRequestedCapabilities(reqCaps)
@@ -256,7 +257,7 @@ class WmClientTest {
 
     @Test
     fun lookupRequestWithSpecificCapsAndNoHeadersTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         val reqCaps = arrayOf("is_mobile", "form_factor", "is_app", "complete_device_name",
             "advertised_device_os", "brand_name")
         client.setRequestedCapabilities(reqCaps)
@@ -277,7 +278,7 @@ class WmClientTest {
 
     @Test
     fun lookupRequestWithCacheTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         client.setCacheSize(1000)
 
         withTestApplication {
@@ -309,7 +310,7 @@ class WmClientTest {
     @Test
     fun lookupRequestWithMixedCaseHeadersTest() {
 
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         withTestApplication {
 
             val callMock = createCall {
@@ -339,7 +340,7 @@ class WmClientTest {
     @Test
     fun lookupHeadersOKTest() {
 
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         val headers: Map<String, String> = createTestHeaders(false)
         val device: JSONDeviceData = client.lookupHeaders(headers)
         val capabilities = device.capabilities
@@ -379,7 +380,7 @@ class WmClientTest {
     @Test
     fun lookupHeadersWithMixedCaseTest() {
 
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         val headers: Map<String, String> = createTestHeaders(true)
         val device: JSONDeviceData = client.lookupHeaders(headers)
         assertNotNull(device)
@@ -397,7 +398,7 @@ class WmClientTest {
 
     @Test
     fun lookupHeadersWithMixedCaseAndCachedClientTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         client.setCacheSize(1000)
         var headers: Map<String, String> = createTestHeaders(true)
         var device = client.lookupHeaders(headers)
@@ -433,7 +434,7 @@ class WmClientTest {
 
     @Test
     fun lookupHeadersWithEmptyHeadersTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         val device: JSONDeviceData = client.lookupHeaders(emptyMap())
         val capabilities = device.capabilities
         assertNotNull(capabilities)
@@ -443,7 +444,7 @@ class WmClientTest {
 
     @Test
     fun setRequestedCapabilitiesTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         client.setCacheSize(1000)
         client.setRequestedStaticCapabilities(arrayOf("wrong1", "brand_name", "is_ios"))
         client.setRequestedVirtualCapabilities(arrayOf("wrong2", "brand_name", "is_ios"))
@@ -468,7 +469,7 @@ class WmClientTest {
 
     @Test
     fun lookupWithCacheExpirationTest() {
-        val client = WmClient.create("http", "localhost", "8080", "")
+        val client = createTestClient()
         client.setCacheSize(1000)
         // perform a couple of detection, one adds a device to deviceID based cache, the other to headers based cache
         val d1 = client.lookupDeviceId("nokia_generic_series40")
@@ -501,7 +502,7 @@ class WmClientTest {
     fun destroyClientTest() {
         var exc = false
         try {
-            val client = WmClient.create("http", "localhost", "8080", "")
+            val client = createTestClient()
             client.destroy()
             // triggering client requests after destroy causes a WM exception or a JobCancellation exception
             client.getInfo()
@@ -514,6 +515,74 @@ class WmClientTest {
         assertTrue(exc)
     }
 
+    @Test
+    fun realCacheUsageTest() {
+        val client = createTestClient()
+        try {
+            val elapsedNoCache = measureNanoTime {
+                for (ua in TestData.USER_AGENTS) {
+                    client.lookupUseragent(ua)
+                }
+            }
+
+            // Now, let's add a cache layer
+            client.setCacheSize(100000)
+
+            // fill cache
+            for (ua in TestData.USER_AGENTS) {
+                client.lookupUseragent(ua)
+            }
+
+            // now use it
+            val elapsedWithCache = measureNanoTime {
+                for (ua in TestData.USER_AGENTS) {
+                    client.lookupUseragent(ua)
+                }
+            }
+
+            // Cache must be at least an order of magnitude faster
+            assertTrue(elapsedNoCache > elapsedWithCache * 10)
+        } finally {
+            client.destroy()
+        }
+    }
+
+    @Test
+    fun realCacheUsageTest_2() {
+        val client = createTestClient()
+        try {
+
+            val elapsedNoCache = measureNanoTime {
+                for (ua in TestData.USER_AGENTS) {
+                    client.lookupUseragent(ua)
+                }
+            }
+            val avgNoCache = elapsedNoCache.toDouble() / TestData.USER_AGENTS.size.toDouble()
+
+            // Now, let's add a cache layer
+            client.setCacheSize(100000)
+
+            // fill cache
+            for (ua in TestData.USER_AGENTS) {
+                client.lookupUseragent(ua)
+            }
+
+            // now use it
+            val elapsedWithCache =  measureNanoTime {
+                for (ua in TestData.USER_AGENTS) {
+                    client.lookupUseragent(ua)
+                }
+            }
+            val avgWithCache = elapsedWithCache.toDouble() / TestData.USER_AGENTS.size.toDouble()
+
+            // Cache must be at least an order of magnitude faster
+            assertTrue(avgNoCache > avgWithCache * 10)
+        } finally {
+            client.destroy()
+        }
+    }
+
+
     // Uses reflection to force invoke of private method clearCacheIfNeeded for testing purposes
     private fun invokeClearCacheIfNeeded(client: WmClient, ltime: String) {
         val clientClass = WmClient::class
@@ -522,5 +591,11 @@ class WmClientTest {
         funct.isAccessible = true
         funct.call(client, ltime)
         funct.isAccessible = false
+    }
+
+    private fun createTestClient(): WmClient {
+        val host = System.getenv("WM_HOST") ?: "localhost"
+        val port = System.getenv("WM_PORT") ?: "8080"
+        return WmClient.create("http", host, port, "")
     }
 }
