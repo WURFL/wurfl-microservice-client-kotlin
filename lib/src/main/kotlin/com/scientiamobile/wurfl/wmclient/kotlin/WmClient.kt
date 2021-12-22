@@ -95,6 +95,10 @@ class WmClient private constructor(
 
     private lateinit var internalClient: HttpClient
 
+    private val deviceOSesLock = Any()
+    private var deviceOSes = emptyArray<String>()
+    private var deviceOsVersionsMap: Map<String, List<String>> = emptyMap()
+
     private fun createUrl(path: String): String {
         var basePath = "$scheme://$host:$port/"
         if (baseURI.isNotEmpty()) {
@@ -179,6 +183,39 @@ class WmClient private constructor(
         }
         return internalRequest("/v2/lookuprequest/json",
             Request(reqHeaders, requestedStaticCaps, requestedVirtualCaps, ""), HEADERS_CACHE_TYPE)
+    }
+
+    /**
+     * @return an array of all devices device_os capabilities in WM server
+     * @throws WmException In case a connection error occurs or malformed data are sent
+     */
+    @Throws(WmException::class)
+    fun getAllOSes(): Array<String> {
+        loadDeviceOsesData()
+        return deviceOSes
+    }
+
+    /**
+     * returns a slice
+     *
+     * @param osName a device OS name
+     * @return an array containing device_os_version for the given os_name
+     * @throws WmException In case a connection error occurs or malformed data are sent
+     */
+    @Throws(WmException::class)
+    fun getAllVersionsForOS(osName: String?): Array<String> {
+        loadDeviceOsesData()
+        return if (deviceOsVersionsMap.containsKey(osName)) {
+            val osVers: List<String>? = deviceOsVersionsMap[osName]?.toMutableList()
+            if (osVers != null) {
+                val cleanedOSVersions = osVers.filter { it != "" }
+                cleanedOSVersions.toTypedArray()
+            } else {
+                emptyArray()
+            }
+        } else {
+            throw WmException("Error getting data from WM server: $osName does not exist")
+        }
     }
 
     fun setCacheSize(uaMaxEntries: Int) {
@@ -364,6 +401,36 @@ class WmClient private constructor(
             requestedVirtualCaps = vcapNames.toTypedArray()
         }
         clearCaches()
+    }
+
+    @Throws(WmException::class)
+    private fun loadDeviceOsesData() {
+        synchronized(deviceOSesLock) {
+            if (deviceOSes.isNotEmpty()) {
+                return
+            }
+        }
+        try {
+            val localOSes = runBlocking {
+                return@runBlocking  internalClient.get<Array<JSONDeviceOsVersions>>(createUrl("/v2/alldeviceosversions/json"))
+            }
+
+            val dmMap: MutableMap<String, MutableList<String>> = HashMap()
+            val devOSes: MutableSet<String> = HashSet()
+            for (osVer in localOSes) {
+                devOSes.add(osVer.osName)
+                if (!dmMap.containsKey(osVer.osName)) {
+                    dmMap[osVer.osName] = ArrayList()
+                }
+                dmMap[osVer.osName]!!.add(osVer.osVersion)
+            }
+            synchronized(deviceOSesLock) {
+                deviceOSes = devOSes.toTypedArray()
+                deviceOsVersionsMap = dmMap
+            }
+        } catch (e: IOException) {
+            throw WmException("An error occurred getting device os name and version data " + e.message)
+        }
     }
 
     /**

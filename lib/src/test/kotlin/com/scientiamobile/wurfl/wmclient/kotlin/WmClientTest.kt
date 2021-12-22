@@ -582,6 +582,42 @@ class WmClientTest {
         }
     }
 
+    //----------------------------- ENUMERATORS TESTS -----------------------------
+    @Test
+    fun getAllOsesTest() {
+        val client: WmClient = createTestClient()
+        try {
+            val oses = client.getAllOSes()
+            assertNotNull(oses)
+            assertTrue(oses.size >= 30)
+        } finally {
+            client.destroy()
+        }
+    }
+
+    @Test
+    fun getAllVersionsForOSTest() {
+        val client: WmClient = createTestClient()
+        try {
+            val osVersions = client.getAllVersionsForOS("Android")
+            assertNotNull(osVersions)
+            assertTrue(osVersions.size > 30)
+            assertNotNull(osVersions[0])
+        } finally {
+            client.destroy()
+        }
+    }
+
+    @Test(expected = WmException::class)
+    fun getAllVersionsForOsWithWrongOsTest() {
+        val client: WmClient = createTestClient()
+        try {
+            client.getAllVersionsForOS("FakeOS")
+        } finally {
+            client.destroy()
+        }
+    }
+
 
     // Uses reflection to force invoke of private method clearCacheIfNeeded for testing purposes
     private fun invokeClearCacheIfNeeded(client: WmClient, ltime: String) {
