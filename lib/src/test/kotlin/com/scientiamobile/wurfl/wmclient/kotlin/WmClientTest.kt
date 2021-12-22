@@ -14,7 +14,8 @@ package com.scientiamobile.wurfl.wmclient.kotlin
 
 import io.ktor.http.*
 import io.ktor.server.testing.*
-import java.util.*
+import kotlin.reflect.full.functions
+import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
 
 
@@ -395,7 +396,6 @@ class WmClientTest {
     }
 
     @Test
-    @Throws(WmException::class)
     fun lookupHeadersWithMixedCaseAndCachedClientTest() {
         val client = WmClient.create("http", "localhost", "8080", "")
         client.setCacheSize(1000)
@@ -416,11 +416,11 @@ class WmClientTest {
 
         // Now mix headers case in a different way (we should hit the cache now)
         headers = mapOf(
-        "UseR-AGenT" to MOCK_REQUEST_UA,
-        "ConTent-TYPe" to "gzip, deflate",
-        "AccEpt-EnCoding" to "application/json",
-        "X-UCbrowsEr-DeviCe-UA" to MOCK_REQUEST_X_UC_BROWSER,
-        "DevIce-StOck-Ua" to MOCK_REQUEST_DEVICE_STOCK_UA)
+            "UseR-AGenT" to MOCK_REQUEST_UA,
+            "ConTent-TYPe" to "gzip, deflate",
+            "AccEpt-EnCoding" to "application/json",
+            "X-UCbrowsEr-DeviCe-UA" to MOCK_REQUEST_X_UC_BROWSER,
+            "DevIce-StOck-Ua" to MOCK_REQUEST_DEVICE_STOCK_UA)
         device = client.lookupHeaders(headers)
         capabilities = device.capabilities
         assertNotNull(capabilities)
@@ -428,6 +428,16 @@ class WmClientTest {
         // Cache size should stay 1, which means that previously stored cache value has been hit even if header case has been changed
         cacheSize = client.getActualCacheSizes()
         assertEquals(cacheSize.second, 1)
+        client.destroy()
+    }
+
+    @Test
+    fun lookupHeadersWithEmptyHeadersTest() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        val device: JSONDeviceData = client.lookupHeaders(emptyMap())
+        val capabilities = device.capabilities
+        assertNotNull(capabilities)
+        assertEquals("generic", capabilities["wurfl_id"])
         client.destroy()
     }
 
@@ -457,6 +467,37 @@ class WmClientTest {
     }
 
     @Test
+    fun lookupWithCacheExpirationTest() {
+        val client = WmClient.create("http", "localhost", "8080", "")
+        client.setCacheSize(1000)
+        // perform a couple of detection, one adds a device to deviceID based cache, the other to headers based cache
+        val d1 = client.lookupDeviceId("nokia_generic_series40")
+        client.lookupUseragent("Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Version/10.0 Mobile/14D27 Safari/602.1")
+        var csizes = client.getActualCacheSizes()
+        assertEquals(1, csizes.first)
+        assertEquals(1, csizes.second)
+        // Date doesn't change, so cache stays full
+        invokeClearCacheIfNeeded(client, d1.ltime!!)
+        assertEquals(1, csizes.first)
+        assertEquals(1, csizes.second)
+
+        // Force cache expiration using reflection: now, date changes, so caches must be cleared
+        invokeClearCacheIfNeeded(client, "2199-12-31")
+        csizes = client.getActualCacheSizes()
+        assertEquals(0, csizes.first)
+        assertEquals(0, csizes.second)
+        // Load a device again
+        client.lookupDeviceId("nokia_generic_series40")
+        client.lookupUseragent("Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Version/10.0 Mobile/14D27 Safari/602.1")
+
+        // caches are filled again
+        csizes = client.getActualCacheSizes()
+        assertEquals(1, csizes.first)
+        assertEquals(1, csizes.second)
+        client.destroy()
+    }
+
+    @Test
     fun destroyClientTest() {
         var exc = false
         try {
@@ -471,5 +512,15 @@ class WmClientTest {
             exc = true
         }
         assertTrue(exc)
+    }
+
+    // Uses reflection to force invoke of private method clearCacheIfNeeded for testing purposes
+    private fun invokeClearCacheIfNeeded(client: WmClient, ltime: String) {
+        val clientClass = WmClient::class
+        val functs = clientClass.functions.filter { it.name == "clearCachesIfNeeded" }
+        val funct = functs[0]
+        funct.isAccessible = true
+        funct.call(client, ltime)
+        funct.isAccessible = false
     }
 }
