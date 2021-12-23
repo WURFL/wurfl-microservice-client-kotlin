@@ -99,6 +99,15 @@ class WmClient private constructor(
     private var deviceOSes = emptyArray<String>()
     private var deviceOsVersionsMap: Map<String, List<String>> = emptyMap()
 
+    // List of device manufacturers
+    private var deviceMakes = emptyArray<String>()
+
+    // Lock object used for deviceMakes safety
+    private val deviceMakesLock = Any()
+
+    // Map that associates brand name to JSONModelMktName objects
+    private var deviceMakesMap: Map<String, List<JSONModelMktName>> = emptyMap()
+
     private fun createUrl(path: String): String {
         var basePath = "$scheme://$host:$port/"
         if (baseURI.isNotEmpty()) {
@@ -215,6 +224,33 @@ class WmClient private constructor(
             }
         } else {
             throw WmException("Error getting data from WM server: $osName does not exist")
+        }
+    }
+
+    /**
+     * @return GetAllDeviceMakes returns a string array of all devices brand_name capabilities in WM server
+     * @throws WmException In case a connection error occurs or malformed data are sent
+     */
+    @Throws(WmException::class)
+    fun getAllDeviceMakes(): Array<String> {
+        loadDeviceMakesData()
+        return deviceMakes
+    }
+
+    /**
+     * @param make a brand name
+     * @return An array of [com.scientiamobile.wurfl.wmclient.kotlin.JSONModelMktName] that contain values for model_name
+     * and marketing_name (the latter, if available).
+     * @throws WmException In case a connection error occurs, malformed data are sent, or the given brand name parameter does not exist in WM server.
+     */
+    @Throws(WmException::class)
+    fun getAllDevicesForMake(make: String): Array<JSONModelMktName> {
+        loadDeviceMakesData()
+        if (deviceMakesMap.containsKey(make)) {
+            val mdMks = deviceMakesMap[make]
+            return mdMks?.toTypedArray() ?: emptyArray()
+        } else {
+            throw WmException(String.format("Error getting data from WM server: $make does not exist"))
         }
     }
 
@@ -430,6 +466,45 @@ class WmClient private constructor(
             }
         } catch (e: IOException) {
             throw WmException("An error occurred getting device os name and version data " + e.message)
+        }
+    }
+
+    @Throws(WmException::class)
+    private fun loadDeviceMakesData() {
+
+        // If deviceMakes cache has values everything has already been loaded, thus we exit
+        synchronized(deviceMakesLock) {
+            if (deviceMakes.isNotEmpty()) {
+                return
+            }
+        }
+
+        // No values already loaded, let's do it.
+        try {
+            val localMakeModels = runBlocking {
+                return@runBlocking  internalClient.get<Array<JSONMakeModel>>(createUrl("/v2/alldevices/json"))
+            }
+
+            val dmMap: MutableMap<String, MutableList<JSONModelMktName>> = HashMap()
+            val devMakes: MutableSet<String> = HashSet()
+            localMakeModels.forEach {
+                if (!dmMap.containsKey(it.brandName)) {
+                    devMakes.add(it.brandName)
+                }
+                var mdMkNames = dmMap[it.brandName]
+                if (mdMkNames == null) {
+                    mdMkNames = ArrayList()
+                    dmMap[it.brandName] = mdMkNames
+                }
+                mdMkNames.add(JSONModelMktName(modelName = it.modelName, marketingName = it.marketingName))
+            }
+
+            synchronized(deviceMakesLock) {
+                deviceMakesMap = dmMap
+                deviceMakes = devMakes.toTypedArray()
+            }
+        } catch (e: IOException) {
+            throw WmException("An error occurred getting makes and model data " + e.message)
         }
     }
 

@@ -63,7 +63,24 @@ data class JSONDeviceOsVersions(
     @SerializedName("device_os")
     var osName: String,
     @SerializedName("device_os_version")
-    var osVersion: String = "")
+    var osVersion: String = "",
+)
+
+data class JSONMakeModel(
+    @SerializedName("brand_name")
+    var brandName: String = "",
+    @SerializedName("model_name")
+    var modelName: String = "",
+    @SerializedName("marketing_name")
+    var marketingName: String = "",
+)
+
+data class JSONModelMktName(
+    @SerializedName("model_name")
+    var modelName: String,
+    @SerializedName("marketing_name")
+    var marketingName: String,
+)
 
 /**
  * WmException is a general purpose exception thrown whenever an unrecoverable error occurs during device detection (ie: no connection available to WM server,

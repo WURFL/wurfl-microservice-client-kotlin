@@ -608,6 +608,47 @@ class WmClientTest {
         }
     }
 
+    @Test
+    fun getAllDeviceMakesTest() {
+        val client: WmClient = createTestClient()
+        try {
+            val makes = client.getAllDeviceMakes()
+            assertNotNull(makes)
+            assertTrue(makes.size > 2000)
+        } finally {
+            client.destroy()
+        }
+    }
+
+    @Test(expected = WmException::class)
+    @Throws(java.lang.Exception::class)
+    fun getAllDevicesForMakeWithWrongMakeTest() {
+        val client: WmClient = createTestClient()
+        try {
+            client.getAllDevicesForMake("Fakething")
+        } finally {
+            client.destroy()
+        }
+    }
+
+    @Test
+    fun getAllDevicesForMakeTest() {
+        val client: WmClient = createTestClient()
+        // Testing a version before 1.2.0.0
+        try {
+            val modelMktNames = client.getAllDevicesForMake("Nokia")
+            assertNotNull(modelMktNames)
+            assertTrue(modelMktNames.size > 700)
+            assertNotNull(modelMktNames[0].modelName)
+            assertNotNull(modelMktNames[5].marketingName)
+            for (mdmk in modelMktNames) {
+                assertNotNull(mdmk)
+            }
+        } finally {
+            client.destroy()
+        }
+    }
+
     @Test(expected = WmException::class)
     fun getAllVersionsForOsWithWrongOsTest() {
         val client: WmClient = createTestClient()
