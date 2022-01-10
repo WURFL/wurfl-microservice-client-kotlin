@@ -121,7 +121,7 @@ class WmClient private constructor(
      * @return This client API version
      */
     fun getApiVersion(): String {
-        return "0.1.0"
+        return "1.0.0"
     }
 
     @Throws(WmException::class)
@@ -559,6 +559,6 @@ class WmClient private constructor(
 // TODO 2022:
 //  - multithreading tests
 //  - teamcity builds
-//  - wuperf modification for kotlin
+//  - wuperf for kotlin
 //  - examples (usual client API example, ktor server example)
 //  - compare performance of different kotlin HTTP clients (CIO, okHttp, etc.)

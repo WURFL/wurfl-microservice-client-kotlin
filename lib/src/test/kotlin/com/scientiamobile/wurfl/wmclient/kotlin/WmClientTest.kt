@@ -26,11 +26,11 @@ class WmClientTest {
 
 
     // Test values for lookupRequest tests
-    private val MOCK_REQUEST_UA =
+    private val mockRequestUserAgent =
         "Mozilla/5.0 (Nintendo Switch; WebApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341"
-    private val MOCK_REQUEST_X_UC_BROWSER =
+    private val mockRequestXUcBrowser =
         "Mozilla/5.0 (Nintendo Switch; ShareApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341"
-    private val MOCK_REQUEST_DEVICE_STOCK_UA =
+    private val mockRequestDeviceStockUa =
         "Mozilla/5.0 (Nintendo Switch; WifiWebAuthApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341"
 
 
@@ -204,10 +204,10 @@ class WmClientTest {
         withTestApplication {
 
             val callMock = createCall {
-                addHeader("User-Agent", MOCK_REQUEST_UA)
-                addHeader("Device-Stock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
-                addHeader("X-UCBrowser-Device-UA", MOCK_REQUEST_X_UC_BROWSER)
-                addHeader("Device-Stock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
+                addHeader("User-Agent", mockRequestUserAgent)
+                addHeader("Device-Stock-UA", mockRequestDeviceStockUa)
+                addHeader("X-UCBrowser-Device-UA", mockRequestXUcBrowser)
+                addHeader("Device-Stock-UA", mockRequestDeviceStockUa)
                 addHeader("Content-Type", ContentType.Application.Json.contentType)
                 addHeader("Accept-Encoding", "gzip, deflate")
             }
@@ -216,13 +216,13 @@ class WmClientTest {
             val capabilities = device.capabilities
             assertNotNull(capabilities)
             assertTrue(capabilities.size >= 40)
-            assertEquals("Smart-TV", capabilities.get("form_factor"))
-            assertEquals("5.1.0.13341", capabilities.get("advertised_browser_version"))
-            assertEquals("false", capabilities.get("is_app"))
-            assertEquals("false", capabilities.get("is_app_webview"))
-            assertEquals("Nintendo", capabilities.get("advertised_device_os"))
-            assertEquals("Nintendo Switch", capabilities.get("complete_device_name"))
-            assertEquals("nintendo_switch_ver1", capabilities.get("wurfl_id"))
+            assertEquals("Smart-TV", capabilities["form_factor"])
+            assertEquals("5.1.0.13341", capabilities["advertised_browser_version"])
+            assertEquals("false", capabilities["is_app"])
+            assertEquals("false", capabilities["is_app_webview"])
+            assertEquals("Nintendo", capabilities["advertised_device_os"])
+            assertEquals("Nintendo Switch", capabilities["complete_device_name"])
+            assertEquals("nintendo_switch_ver1", capabilities["wurfl_id"])
         }
         client.destroy()
     }
@@ -237,10 +237,10 @@ class WmClientTest {
         withTestApplication {
 
             val callMock = createCall {
-                addHeader("User-Agent", MOCK_REQUEST_UA)
-                addHeader("Device-Stock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
-                addHeader("X-UCBrowser-Device-UA", MOCK_REQUEST_X_UC_BROWSER)
-                addHeader("Device-Stock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
+                addHeader("User-Agent", mockRequestUserAgent)
+                addHeader("Device-Stock-UA", mockRequestDeviceStockUa)
+                addHeader("X-UCBrowser-Device-UA", mockRequestXUcBrowser)
+                addHeader("Device-Stock-UA", mockRequestDeviceStockUa)
                 addHeader("Content-Type", ContentType.Application.Json.contentType)
                 addHeader("Accept-Encoding", "gzip, deflate")
             }
@@ -286,10 +286,10 @@ class WmClientTest {
         withTestApplication {
 
             val callMock = createCall {
-                addHeader("User-Agent", MOCK_REQUEST_UA)
-                addHeader("Device-Stock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
-                addHeader("X-UCBrowser-Device-UA", MOCK_REQUEST_X_UC_BROWSER)
-                addHeader("Device-Stock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
+                addHeader("User-Agent", mockRequestUserAgent)
+                addHeader("Device-Stock-UA", mockRequestDeviceStockUa)
+                addHeader("X-UCBrowser-Device-UA", mockRequestXUcBrowser)
+                addHeader("Device-Stock-UA", mockRequestDeviceStockUa)
                 addHeader("Content-Type", ContentType.Application.Json.contentType)
                 addHeader("Accept-Encoding", "gzip, deflate")
             }
@@ -316,10 +316,10 @@ class WmClientTest {
         withTestApplication {
 
             val callMock = createCall {
-                addHeader("uSer-AgeNt", MOCK_REQUEST_UA)
-                addHeader("device-sTock-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
-                addHeader("X-UCBroWser-DevicE-uA", MOCK_REQUEST_X_UC_BROWSER)
-                addHeader("Device-stOCk-UA", MOCK_REQUEST_DEVICE_STOCK_UA)
+                addHeader("uSer-AgeNt", mockRequestUserAgent)
+                addHeader("device-sTock-UA", mockRequestDeviceStockUa)
+                addHeader("X-UCBroWser-DevicE-uA", mockRequestXUcBrowser)
+                addHeader("Device-stOCk-UA", mockRequestDeviceStockUa)
                 addHeader("ContenT-TypE", ContentType.Application.Json.contentType)
                 addHeader("aCcept-EnCodIng", "gzip, deflate")
             }
@@ -328,13 +328,13 @@ class WmClientTest {
             val capabilities = device.capabilities
             assertNotNull(capabilities)
             assertTrue(capabilities.size >= 40)
-            assertEquals("Smart-TV", capabilities.get("form_factor"))
-            assertEquals("5.1.0.13341", capabilities.get("advertised_browser_version"))
-            assertEquals("false", capabilities.get("is_app"))
-            assertEquals("false", capabilities.get("is_app_webview"))
-            assertEquals("Nintendo", capabilities.get("advertised_device_os"))
-            assertEquals("Nintendo Switch", capabilities.get("complete_device_name"))
-            assertEquals("nintendo_switch_ver1", capabilities.get("wurfl_id"))
+            assertEquals("Smart-TV", capabilities["form_factor"])
+            assertEquals("5.1.0.13341", capabilities["advertised_browser_version"])
+            assertEquals("false", capabilities["is_app"])
+            assertEquals("false", capabilities["is_app_webview"])
+            assertEquals("Nintendo", capabilities["advertised_device_os"])
+            assertEquals("Nintendo Switch", capabilities["complete_device_name"])
+            assertEquals("nintendo_switch_ver1", capabilities["wurfl_id"])
         }
         client.destroy()
     }
@@ -372,11 +372,11 @@ class WmClientTest {
                         "Mozilla/5.0 (Nintendo Switch; WifiWebAuthApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341")
         }
 
-        return mapOf("User-Agent" to MOCK_REQUEST_UA,
+        return mapOf("User-Agent" to mockRequestUserAgent,
             "Content-Type" to "gzip, deflate",
             "Accept-Encoding" to "application/json",
-            "X-UCBrowser-Device-UA" to MOCK_REQUEST_X_UC_BROWSER,
-            "Device-Stock-UA" to MOCK_REQUEST_DEVICE_STOCK_UA)
+            "X-UCBrowser-Device-UA" to mockRequestXUcBrowser,
+            "Device-Stock-UA" to mockRequestDeviceStockUa)
     }
 
     @Test
@@ -419,11 +419,11 @@ class WmClientTest {
 
         // Now mix headers case in a different way (we should hit the cache now)
         headers = mapOf(
-            "UseR-AGenT" to MOCK_REQUEST_UA,
+            "UseR-AGenT" to mockRequestUserAgent,
             "ConTent-TYPe" to "gzip, deflate",
             "AccEpt-EnCoding" to "application/json",
-            "X-UCbrowsEr-DeviCe-UA" to MOCK_REQUEST_X_UC_BROWSER,
-            "DevIce-StOck-Ua" to MOCK_REQUEST_DEVICE_STOCK_UA)
+            "X-UCbrowsEr-DeviCe-UA" to mockRequestXUcBrowser,
+            "DevIce-StOck-Ua" to mockRequestDeviceStockUa)
         device = client.lookupHeaders(headers)
         capabilities = device.capabilities
         assertNotNull(capabilities)
