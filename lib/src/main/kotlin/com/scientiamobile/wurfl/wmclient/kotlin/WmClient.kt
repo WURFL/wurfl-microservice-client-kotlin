@@ -21,6 +21,7 @@ import io.ktor.request.*
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.util.*
+import javax.servlet.http.HttpServletRequest
 
 
 private const val DEVICE_ID_CACHE_TYPE = "dId-cache"
@@ -116,6 +117,13 @@ class WmClient private constructor(
         return "$basePath/$path"
     }
 
+    /**
+     * @return This client API version
+     */
+    fun getApiVersion(): String {
+        return "0.1.0"
+    }
+
     @Throws(WmException::class)
     fun getInfo(): JSONInfoData {
         val info = runBlocking {
@@ -163,6 +171,20 @@ class WmClient private constructor(
         val reqHeaders: MutableMap<String, String> = HashMap()
         for (headerName in importantHeaders) {
             val headerValue: String? = ktorRequest.headers[headerName]
+            if (headerValue!= null && headerValue.isNotEmpty()) {
+                reqHeaders[headerName] = headerValue
+            }
+        }
+        return internalRequest("/v2/lookuprequest/json", Request(reqHeaders, requestedStaticCaps,
+            requestedVirtualCaps, ""), HEADERS_CACHE_TYPE)
+    }
+
+    @Throws(WmException::class)
+    fun lookupRequest(request: HttpServletRequest): JSONDeviceData {
+
+        val reqHeaders: MutableMap<String, String> = HashMap()
+        for (headerName in importantHeaders) {
+            val headerValue: String? = request.getHeader(headerName)
             if (headerValue!= null && headerValue.isNotEmpty()) {
                 reqHeaders[headerName] = headerValue
             }
@@ -533,3 +555,10 @@ class WmClient private constructor(
         }
     }
 }
+
+// TODO 2022:
+//  - multithreading tests
+//  - teamcity builds
+//  - wuperf modification for kotlin
+//  - examples (usual client API example, ktor server example)
+//  - compare performance of different kotlin HTTP clients (CIO, okHttp, etc.)

@@ -14,6 +14,8 @@ package com.scientiamobile.wurfl.wmclient.kotlin
 
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import org.mockito.Mockito
+import javax.servlet.http.HttpServletRequest
 import kotlin.reflect.full.functions
 import kotlin.reflect.jvm.isAccessible
 import kotlin.system.measureNanoTime
@@ -659,6 +661,40 @@ class WmClientTest {
         }
     }
 
+    @Test
+    fun lookupRequestWithServletRequestOKTest() {
+        val client: WmClient = createTestClient()
+        val request = createTestRequest()
+        val device: JSONDeviceData = client.lookupRequest(request)
+        assertNotNull(device)
+        val capabilities = device.capabilities
+        assertNotNull(capabilities)
+        assertTrue(capabilities.size >= 40)
+        assertEquals("Smart-TV", capabilities["form_factor"])
+        assertEquals("5.1.0.13341", capabilities["advertised_browser_version"])
+        assertEquals("false", capabilities["is_app"])
+        assertEquals("false", capabilities["is_app_webview"])
+        assertEquals("Nintendo", capabilities["advertised_device_os"])
+        assertEquals("Nintendo Switch", capabilities["complete_device_name"])
+        assertEquals("nintendo_switch_ver1", capabilities["wurfl_id"])
+    }
+
+    @Test
+    fun lookupHttpServletRequestWithSpecificCapsAndNoHeadersTest() {
+        val client: WmClient = createTestClient()
+        val request = createTestRequestWithEmptyHeaders()
+        try {
+            val reqCaps = arrayOf("brand_name", "is_wireless_device", "pointing_method", "model_name")
+            client.setRequestedCapabilities(reqCaps)
+            // Create request to pass
+            val device: JSONDeviceData = client.lookupRequest(request)
+            assertNotNull(device)
+            assertEquals(device.capabilities["wurfl_id"], "generic")
+        } catch (e: WmException) {
+            fail(e.message)
+        }
+    }
+
 
     // Uses reflection to force invoke of private method clearCacheIfNeeded for testing purposes
     private fun invokeClearCacheIfNeeded(client: WmClient, ltime: String) {
@@ -674,5 +710,27 @@ class WmClientTest {
         val host = System.getenv("WM_HOST") ?: "localhost"
         val port = System.getenv("WM_PORT") ?: "8080"
         return WmClient.create("http", host, port, "")
+    }
+
+    private fun createTestRequest(): HttpServletRequest {
+
+        val ua = "Mozilla/5.0 (Nintendo Switch; WebApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341"
+        val xucbr = "Mozilla/5.0 (Nintendo Switch; ShareApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341"
+        val dstkUa = "Mozilla/5.0 (Nintendo Switch; WifiWebAuthApplet) AppleWebKit/601.6 (KHTML, like Gecko) NF/4.0.0.5.9 NintendoBrowser/5.1.0.13341"
+
+        val mockServletRequest = Mockito.mock(HttpServletRequest::class.java)
+        Mockito.`when`(mockServletRequest.getHeader("User-Agent")).thenReturn(ua)
+        Mockito.`when`(mockServletRequest.getHeader("X-UCBrowser-Device-UA")).thenReturn(xucbr)
+        Mockito.`when`(mockServletRequest.getHeader("Device-Stock-UA")).thenReturn(dstkUa)
+        return mockServletRequest
+    }
+
+    private fun createTestRequestWithEmptyHeaders(): HttpServletRequest {
+
+        val mockServletRequest = Mockito.mock(HttpServletRequest::class.java)
+        Mockito.`when`(mockServletRequest.getHeader("User-Agent")).thenReturn(null)
+        Mockito.`when`(mockServletRequest.getHeader("X-UCBrowser-Device-UA")).thenReturn(null)
+        Mockito.`when`(mockServletRequest.getHeader("Device-Stock-UA")).thenReturn(null)
+        return mockServletRequest
     }
 }

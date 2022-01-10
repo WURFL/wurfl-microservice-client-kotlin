@@ -38,12 +38,13 @@ dependencies {
     implementation("io.ktor:ktor-client-serialization:$ktorVersion")
     implementation("io.ktor:ktor-client-gson:$ktorVersion")
     implementation("io.ktor:ktor-gson:$ktorVersion")
+    implementation("javax.servlet:javax.servlet-api:4.0.1")
+
 
     // test mocks
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-
-
-
+    // we use mockito to mock old Java HttpServletRequest object and others
+    testImplementation("org.mockito:mockito-core:4.2.0")
 
     // Use the Kotlin test library.
     testImplementation("org.jetbrains.kotlin:kotlin-test")
