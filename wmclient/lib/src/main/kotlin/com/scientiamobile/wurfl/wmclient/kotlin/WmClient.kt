@@ -559,6 +559,5 @@ class WmClient private constructor(
 // TODO 2022:
 //  - multithreading tests
 //  - teamcity builds
-//  - wuperf for kotlin
-//  - examples (usual client API example, ktor server example)
+//  - wmperf for kotlin
 //  - compare performance of different kotlin HTTP clients (CIO, okHttp, etc.)
