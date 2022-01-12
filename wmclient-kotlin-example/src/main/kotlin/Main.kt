@@ -11,9 +11,9 @@ fun main() {
         // We ask Wm server API for some Wm server info such as server API version and info about WURFL API and file used by WM server.
         val info = client.getInfo()
         println("Printing WM server information")
-        println("WURFL API version: " + info.wurflApiVersion)
-        println("WM server version:  " + info.wmVersion)
-        println("Wurfl file info: " + info.wurflInfo)
+        println("WURFL API version:  ${info.wurflApiVersion}")
+        println("WM server version:  ${info.wmVersion}")
+        println("Wurfl file info: ${info.wurflInfo}")
 
         val ua = "Mozilla/5.0 (Linux; Android 7.1.1; ONEPLUS A5000 Build/NMF26X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36"
 
@@ -54,16 +54,16 @@ fun main() {
         } else {
             // Let's get the device capabilities and print some of them
             val capabilities = device.capabilities
-            println("Detected device WURFL ID: $capabilities[\"wurfl_id\"]")
-            println("Device brand & model: $capabilities[\"brand_name\"] $capabilities[\"model_name\"]")
-            println("Detected device form factor: $capabilities[\"form_factor\"]")
-            if (capabilities["is_smartphone"].equals("true")) {
+            println("Detected device WURFL ID: ${capabilities["wurfl_id"]}")
+            println("Device brand & model: ${capabilities["brand_name"]} ${capabilities["model_name"]}")
+            println("Detected device form factor: ${capabilities["form_factor"]}")
+            if (capabilities["is_smartphone"] == "true") {
                 println("This is a smartphone")
             }
 
             // Iterate over all the device capabilities and print them
             println("All received capabilities")
-            capabilities.keys.forEach{ println("$it :  $capabilities[it]") }
+            capabilities.keys.forEach{ println("$it :  ${capabilities[it]}") }
         }
 
         // Get all the device manufacturers, and print the first twenty
@@ -82,9 +82,8 @@ fun main() {
 
         // Sort ModelMktName objects by their model name
         devNames.sortWith(ByModelNameComparer())
-
-        for (modelMktName in devNames) {
-            println(" - ${modelMktName.modelName} ${modelMktName.marketingName}")
+        devNames.forEach {
+            println(" - ${it.modelName} ${it.marketingName}")
         }
 
         // Now call the WM server to get all operative system names
