@@ -12,8 +12,12 @@ limitations under the License.
 */
 package com.scientiamobile.wurfl.wmclient.kotlin
 
+import com.scientiamobile.wurfl.wmclient.kotlin.TestData.createTestUserAgentList
 import io.ktor.http.*
 import io.ktor.server.testing.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.mockito.Mockito
 import javax.servlet.http.HttpServletRequest
 import kotlin.reflect.full.functions
@@ -695,6 +699,61 @@ class WmClientTest {
         }
     }
 
+    @Test
+    fun multiThreadedLookupTest() {
+        val client: WmClient = createTestClient()
+        client.setCacheSize(1000)
+        val threadCount = 32
+        runBlocking {
+            // create a channel on which we write each thread result
+            val channel = Channel<Boolean>()
+            val userAgents = createTestUserAgentList()
+            val testData = createExpectedValueMap(client)
+            for (i in 0 until threadCount) {
+
+                launch {
+                    val result: Boolean
+                    println("Starting task#: $i")
+                    var c = 0
+                    result = try {
+                        for (line in userAgents) {
+                            val d = client.lookupUseragent(line)
+                            assertNotNull(d)
+                            assertEquals(d.capabilities["wurfl_id"], testData[line])
+                            c++
+                        }
+                        println("Lines read from terminated task #$i: $c")
+                        true
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        false
+                    }
+                    println("Sendind $result")
+                    channel.send(result)
+                }
+            }
+            // check that all tasks have completed their work properly
+            repeat(threadCount) {
+                assertTrue { channel.receive() }
+            }
+            channel.close()
+        }
+        client.destroy()
+    }
+
+    private fun createExpectedValueMap(client: WmClient): Map<String, String> {
+        val userAgentList = createTestUserAgentList()
+        val m: MutableMap<String, String> = HashMap()
+        for (ua in userAgentList) {
+            try {
+                val device = client.lookupUseragent(ua)
+                m[ua] = device.capabilities["wurfl_id"]!!
+            } catch (e: WmException) {
+                fail(e.message)
+            }
+        }
+        return m
+    }
 
     // Uses reflection to force invoke of private method clearCacheIfNeeded for testing purposes
     private fun invokeClearCacheIfNeeded(client: WmClient, ltime: String) {
