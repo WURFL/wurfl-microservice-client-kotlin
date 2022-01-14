@@ -277,7 +277,7 @@ class WmClient private constructor(
     }
 
     fun setCacheSize(uaMaxEntries: Int) {
-        this.headersCache = LRUCache(uaMaxEntries)
+        headersCache = LRUCache(uaMaxEntries)
         devIDCache = LRUCache() // this has the default cache size
     }
 
@@ -376,16 +376,12 @@ class WmClient private constructor(
     private fun clearCaches() {
         headersCache?.clear()
         devIDCache?.clear()
-
-        // TODO: uncomment when introducing WM data enumerators
-        /*
-        makeModels = arrayOfNulls<JSONMakeModel>(0)
-        deviceMakes = arrayOfNulls<String>(0)
+        deviceMakes = emptyArray()
         deviceMakesMap = HashMap<String, List<JSONModelMktName>>()
         synchronized(deviceOSesLock) {
-            deviceOSes = arrayOfNulls<String>(0)
+            deviceOSes = emptyArray()
             deviceOsVersionsMap = HashMap<String, List<String>>()
-        }*/
+        }
     }
 
     fun setRequestedStaticCapabilities(capsList: Array<String>?) {
@@ -542,22 +538,9 @@ class WmClient private constructor(
             clearCaches()
             headersCache = null
             devIDCache = null
-            /*
-            makeModels = null
-            deviceMakesMap = null
-            deviceMakes = null
-            deviceOsVersionsMap = null
-            deviceOSes = null
-            */
             internalClient.close()
         } catch (e: IOException) {
-            throw WmException("Unable to close client: " + e.message)
+            throw WmException("Unable to close client: ${e.message}")
         }
     }
 }
-
-// TODO 2022:
-//  - multithreading tests
-//  - teamcity builds
-//  - wmperf for kotlin
-//  - compare performance of different kotlin HTTP clients (CIO, okHttp, etc.)
