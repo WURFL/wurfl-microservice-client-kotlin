@@ -13,11 +13,13 @@ limitations under the License.
 package com.scientiamobile.wurfl.wmclient.kotlin
 
 import io.ktor.client.*
-import io.ktor.client.engine.apache.*
+
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.request.*
+import io.ktor.client.engine.java.*
+import io.ktor.client.features.*
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.util.*
@@ -47,18 +49,20 @@ class WmClient private constructor(
 
             val wmclient = WmClient(scheme, host, port, uri)
             if (scheme.equals("http", ignoreCase = true) || scheme.equals("https", ignoreCase = true)) {
-                wmclient.internalClient = HttpClient(Apache) {
+                wmclient.internalClient = HttpClient(Java) {
                     engine {
-                        connectTimeout = DEFAULT_CONN_TIMEOUT
-                        connectionRequestTimeout = DEFAULT_CONN_TIMEOUT
-                        socketTimeout = DEFAULT_RW_TIMEOUT
-                        customizeClient {
-                            setMaxConnPerRoute(100)
-                            setMaxConnTotal(200)
-                        }
+                        threadsCount = 8
+                        pipelining = true
+
                     }
                     install(JsonFeature) {
                         serializer = GsonSerializer()
+                    }
+                    install(HttpTimeout) {
+                        requestTimeoutMillis = DEFAULT_RW_TIMEOUT.toLong()
+                        connectTimeoutMillis = DEFAULT_CONN_TIMEOUT.toLong()
+                        socketTimeoutMillis  = DEFAULT_CONN_TIMEOUT.toLong()
+
                     }
                 }
             } else {
@@ -112,11 +116,12 @@ class WmClient private constructor(
     private var deviceMakesMap: Map<String, List<JSONModelMktName>> = emptyMap()
 
     private fun createUrl(path: String): String {
-        var basePath = "$scheme://$host:$port/"
+        var basePath = "$scheme://$host:$port"
         if (baseURI.isNotEmpty()) {
-            basePath += "$baseURI/"
+            basePath += "/$baseURI"
         }
-        return "$basePath/$path"
+        val url = "$basePath$path"
+        return url
     }
 
     /**

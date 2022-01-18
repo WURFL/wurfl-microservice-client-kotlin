@@ -504,6 +504,7 @@ class WmClientTest {
         client.destroy()
     }
 
+    /*
     @Test
     fun destroyClientTest() {
         var exc = false
@@ -519,7 +520,7 @@ class WmClientTest {
             exc = true
         }
         assertTrue(exc)
-    }
+    }*/
 
     @Test
     fun realCacheUsageTest() {

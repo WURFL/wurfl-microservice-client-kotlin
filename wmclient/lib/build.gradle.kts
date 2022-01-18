@@ -70,7 +70,7 @@ publishing {
 
         // Use ktor with Apache engine as HTTP client and gson as json serializer/deserializer
         implementation("io.ktor:ktor-client-core:$ktorVersion")
-        implementation("io.ktor:ktor-client-apache:$ktorVersion")
+        implementation("io.ktor:ktor-client-java:$ktorVersion")
         implementation("io.ktor:ktor-client-serialization:$ktorVersion")
         implementation("io.ktor:ktor-client-gson:$ktorVersion")
         implementation("io.ktor:ktor-gson:$ktorVersion")
