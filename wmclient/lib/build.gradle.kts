@@ -18,7 +18,7 @@ repositories {
     mavenCentral()
 }
 var ktorVersion = "1.6.7"
-var projectVersion = "1.0.0"
+var projectVersion = "1.0.1"
 
 tasks.withType<AbstractArchiveTask> {
     setProperty("archiveBaseName", rootProject.name)
