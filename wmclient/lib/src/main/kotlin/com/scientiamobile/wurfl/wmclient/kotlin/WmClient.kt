@@ -50,9 +50,11 @@ class WmClient private constructor(
                 wmclient.internalClient = HttpClient(Apache) {
                     engine {
                         connectTimeout = DEFAULT_CONN_TIMEOUT
+                        connectionRequestTimeout = DEFAULT_CONN_TIMEOUT
                         socketTimeout = DEFAULT_RW_TIMEOUT
                         customizeClient {
                             setMaxConnPerRoute(100)
+                            setMaxConnTotal(200)
                         }
                     }
                     install(JsonFeature) {
