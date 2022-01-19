@@ -75,7 +75,7 @@ publishing {
         implementation("io.ktor:ktor-client-serialization:$ktorVersion")
 
         // this contains ApplicationRequest
-        implementation("io.ktor:ktor-server-core:1.6.7")
+        implementation("io.ktor:ktor-server-core:$ktorVersion")
         // this contains HTTPServletRequest
         implementation("javax.servlet:javax.servlet-api:4.0.1")
 
