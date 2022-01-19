@@ -61,7 +61,7 @@ data class Request(
     val requestedCaps: Array<String>?,
     @SerialName("requested_vcaps")
     val requestedVcaps: Array<String>?,
-
+    @SerialName("wurfl_id")
     val wurflId: String,
 )
 @Serializable
