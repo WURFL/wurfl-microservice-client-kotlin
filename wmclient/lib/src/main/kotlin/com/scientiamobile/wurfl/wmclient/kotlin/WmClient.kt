@@ -12,14 +12,16 @@ limitations under the License.
 */
 package com.scientiamobile.wurfl.wmclient.kotlin
 
-import io.ktor.client.*
-import io.ktor.client.engine.apache.*
-import io.ktor.client.features.json.*
-import io.ktor.client.features.json.serializer.*
-import io.ktor.client.request.*
-import io.ktor.http.*
 import io.ktor.request.*
-import kotlinx.coroutines.runBlocking
+import org.apache.hc.client5.http.config.RequestConfig
+import org.apache.hc.client5.http.impl.classic.HttpClients
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager
+import org.apache.hc.core5.util.Timeout
+import org.http4k.client.ApacheClient
+import org.http4k.core.Body
+import org.http4k.core.HttpHandler
+import org.http4k.core.Method
+import org.http4k.format.KotlinxSerialization.auto
 import java.io.IOException
 import java.util.*
 import javax.servlet.http.HttpServletRequest
@@ -48,20 +50,21 @@ class WmClient private constructor(
 
             val wmclient = WmClient(scheme, host, port, uri)
             if (scheme.equals("http", ignoreCase = true) || scheme.equals("https", ignoreCase = true)) {
-                wmclient.internalClient = HttpClient(Apache) {
-                    engine {
-                        connectTimeout = DEFAULT_CONN_TIMEOUT
-                        connectionRequestTimeout = DEFAULT_CONN_TIMEOUT
-                        socketTimeout = DEFAULT_RW_TIMEOUT
-                        customizeClient {
-                            setMaxConnPerRoute(100)
-                            setMaxConnTotal(200)
-                        }
-                    }
-                    install(JsonFeature) {
-                        serializer = KotlinxSerializer()
-                    }
-                }
+
+                val connManager = PoolingHttpClientConnectionManager()
+                connManager.maxTotal = 200
+                connManager.defaultMaxPerRoute = 100
+
+                val httpClient = ApacheClient(
+                    client = HttpClients.custom().setDefaultRequestConfig(RequestConfig.custom()
+                        .setResponseTimeout(Timeout.ofMilliseconds(DEFAULT_RW_TIMEOUT.toLong()))
+                        .setConnectTimeout(Timeout.ofMilliseconds(DEFAULT_CONN_TIMEOUT.toLong()))
+                        .setConnectionRequestTimeout(Timeout.ofMilliseconds(DEFAULT_CONN_TIMEOUT.toLong()))
+                        .build()).setConnectionManager(connManager)
+                        .build()
+
+                )
+                wmclient.internalClient = httpClient
             } else {
                 throw WmException("Invalid connection scheme specified:  [ $scheme ]")
             }
@@ -98,7 +101,7 @@ class WmClient private constructor(
     // Maps concat headers (mainly UA) -> JSONDeviceData
     private var headersCache: LRUCache<String, JSONDeviceData>? = null
 
-    private lateinit var internalClient: HttpClient
+    private lateinit var internalClient: HttpHandler
 
     private val deviceOSesLock = Any()
     private var deviceOSes = emptyArray<String>()
@@ -114,11 +117,12 @@ class WmClient private constructor(
     private var deviceMakesMap: Map<String, List<JSONModelMktName>> = emptyMap()
 
     private fun createUrl(path: String): String {
-        var basePath = "$scheme://$host:$port/"
+        var basePath = "$scheme://$host:$port"
         if (baseURI.isNotEmpty()) {
-            basePath += "$baseURI/"
+            basePath += "/$baseURI"
         }
-        return "$basePath/$path"
+        val url = "$basePath$path"
+        return url
     }
 
     /**
@@ -130,9 +134,12 @@ class WmClient private constructor(
 
     @Throws(WmException::class)
     fun getInfo(): JSONInfoData {
-        val info = runBlocking {
-            return@runBlocking internalClient.get<JSONInfoData>(urlString = createUrl("/v2/getinfo/json"))
-        }
+        val req = org.http4k.core.Request(Method.GET, createUrl("/v2/getinfo/json"))
+        val infoLens = Body.auto<JSONInfoData>().toLens()
+        val response = internalClient(req)
+        val info = infoLens[response]
+
+
         if (!(checkData(info))) {
             throw WmException("Server returned empty data or a wrong json format")
         }
@@ -333,12 +340,11 @@ class WmClient private constructor(
                 }
             }
 
-            device = runBlocking {
-                internalClient.post<JSONDeviceData>(createUrl(path)) {
-                    contentType(ContentType.Application.Json)
-                    body = request
-                }
-            }
+            val deviceLens = Body.auto<JSONDeviceData>().toLens()
+            var req = org.http4k.core.Request(Method.POST, createUrl(path))
+            req = Body.auto<Request>().toLens().inject(request, req)
+            val response = internalClient(req)
+            device = deviceLens[response]
 
             if (device.error.isNotEmpty()) {
                 throw WmException("Unable to complete request to WM server:  $device.error")
@@ -469,9 +475,10 @@ class WmClient private constructor(
             }
         }
         try {
-            val localOSes = runBlocking {
-                return@runBlocking internalClient.get<Array<JSONDeviceOsVersions>>(createUrl("/v2/alldeviceosversions/json"))
-            }
+            val req = org.http4k.core.Request(Method.GET, createUrl("/v2/alldeviceosversions/json"))
+            val devOsLens = Body.auto<Array<JSONDeviceOsVersions>>().toLens()
+            val response = internalClient(req)
+            val localOSes = devOsLens[response]
 
             val dmMap: MutableMap<String, MutableList<String>> = HashMap()
             val devOSes: MutableSet<String> = HashSet()
@@ -503,9 +510,10 @@ class WmClient private constructor(
 
         // No values already loaded, let's do it.
         try {
-            val localMakeModels = runBlocking {
-                return@runBlocking internalClient.get<Array<JSONMakeModel>>(createUrl("/v2/alldevices/json"))
-            }
+            val req = org.http4k.core.Request(Method.GET, createUrl("/v2/alldevices/json"))
+            val devOsLens = Body.auto<Array<JSONMakeModel>>().toLens()
+            val response = internalClient(req)
+            val localMakeModels = devOsLens[response]
 
             val dmMap: MutableMap<String, MutableList<JSONModelMktName>> = HashMap()
             val devMakes: MutableSet<String> = HashSet()
@@ -542,7 +550,7 @@ class WmClient private constructor(
             clearCaches()
             headersCache = null
             devIDCache = null
-            internalClient.close()
+            //internalClient.close()
         } catch (e: IOException) {
             throw WmException("Unable to close client: ${e.message}")
         }

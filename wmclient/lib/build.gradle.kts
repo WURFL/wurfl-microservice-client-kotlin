@@ -18,8 +18,9 @@ repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
 }
-var ktorVersion = "1.6.7"
-var projectVersion = "1.0.0"
+val ktorVersion = "1.6.7"
+val http4kVersion = "4.17.9.0"
+val projectVersion = "1.0.0"
 
 tasks.withType<AbstractArchiveTask> {
     setProperty("archiveBaseName", rootProject.name)
@@ -70,9 +71,11 @@ publishing {
         implementation("com.google.guava:guava:30.1.1-jre")
 
         // Use ktor with Apache engine as HTTP client and kotlinx as json serializer/deserializer
-        implementation("io.ktor:ktor-client-core:$ktorVersion")
-        implementation("io.ktor:ktor-client-apache:$ktorVersion")
-        implementation("io.ktor:ktor-client-serialization:$ktorVersion")
+        implementation (platform("org.http4k:http4k-bom:$http4kVersion"))
+        implementation ("org.http4k:http4k-core")
+        implementation ("org.http4k:http4k-client-apache")
+
+        implementation("org.http4k:http4k-format-kotlinx-serialization:$http4kVersion")
 
         // this contains ApplicationRequest
         implementation("io.ktor:ktor-server-core:$ktorVersion")
