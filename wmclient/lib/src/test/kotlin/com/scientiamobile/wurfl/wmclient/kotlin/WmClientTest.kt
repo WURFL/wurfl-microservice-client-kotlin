@@ -102,8 +102,8 @@ class WmClientTest {
         val device: JSONDeviceData = client.lookupUseragent(ua)
         assertNotNull(device)
         val capabilities = device.capabilities
-        val dcount = capabilities.size
-        assertTrue(dcount >= 40)
+        val dcount = capabilities?.size
+        assertTrue(dcount!! >= 40)
         assertEquals(capabilities["model_name"], "SM-G950F")
         assertEquals("false", capabilities["is_app"])
         assertEquals("false", capabilities["is_app_webview"])
@@ -135,7 +135,7 @@ class WmClientTest {
         try {
             val device: JSONDeviceData = client.lookupUseragent("")
             assertNotNull(device)
-            assertEquals(device.capabilities["wurfl_id"], "generic")
+            assertEquals(device.capabilities?.get("wurfl_id"), "generic")
         } catch (e: WmException) {
             fail(e.message)
         }
@@ -179,7 +179,7 @@ class WmClientTest {
         try {
             // this ID does not exist
             val device = client.lookupDeviceId("nokia_generic_series40_wrong")
-            println(device.capabilities["wurfl_id"])
+            println(device.capabilities?.get("wurfl_id"))
 
         } catch (e: WmException) {
             exc = true
@@ -408,7 +408,7 @@ class WmClientTest {
         client.setCacheSize(1000)
         var headers: Map<String, String> = createTestHeaders(true)
         var device = client.lookupHeaders(headers)
-        var capabilities: Map<String, String> = device.capabilities
+        var capabilities = device.capabilities
         assertNotNull(capabilities)
         assertTrue(capabilities.size >= 40)
         assertEquals("Smart-TV", capabilities["form_factor"])
@@ -458,17 +458,18 @@ class WmClientTest {
             "Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Version/10.0 Mobile/14D27 Safari/602.1"
         var d = client.lookupUseragent(ua)
         assertNotNull(d)
-        assertEquals(d.capabilities.size, 3)
-        assertNull(d.capabilities["wrong1"])
+        assertEquals(d.capabilities?.size, 3)
+        assertNull(d.capabilities?.get("wrong1"))
 
         // This will reset static caps
         client.setRequestedStaticCapabilities(null)
         d = client.lookupUseragent(ua)
-        assertEquals(d.capabilities.size, 2)
+        assertEquals(d.capabilities?.size, 2)
         // If all required caps arrays are reset, ALL caps are returned
         client.setRequestedVirtualCapabilities(null)
         d = client.lookupUseragent(ua)
-        val capsize: Int = d.capabilities.size
+        assertNotNull(d.capabilities)
+        val capsize: Int = d.capabilities!!.size
         assertTrue(capsize >= 40)
         client.destroy()
     }
@@ -693,7 +694,7 @@ class WmClientTest {
             // Create request to pass
             val device: JSONDeviceData = client.lookupRequest(request)
             assertNotNull(device)
-            assertEquals(device.capabilities["wurfl_id"], "generic")
+            assertEquals(device.capabilities?.get("wurfl_id"), "generic")
         } catch (e: WmException) {
             fail(e.message)
         }
@@ -719,7 +720,7 @@ class WmClientTest {
                         for (line in userAgents) {
                             val d = client.lookupUseragent(line)
                             assertNotNull(d)
-                            assertEquals(d.capabilities["wurfl_id"], testData[line])
+                            assertEquals(d.capabilities?.get("wurfl_id"), testData[line])
                             c++
                         }
                         println("Lines read from terminated task #$i: $c")
@@ -747,7 +748,7 @@ class WmClientTest {
         for (ua in userAgentList) {
             try {
                 val device = client.lookupUseragent(ua)
-                m[ua] = device.capabilities["wurfl_id"]!!
+                m[ua] = device.capabilities?.get("wurfl_id")!!
             } catch (e: WmException) {
                 fail(e.message)
             }

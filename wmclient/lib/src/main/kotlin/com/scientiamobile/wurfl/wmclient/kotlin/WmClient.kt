@@ -15,6 +15,7 @@ package com.scientiamobile.wurfl.wmclient.kotlin
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.features.json.*
+import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.request.*
@@ -58,7 +59,7 @@ class WmClient private constructor(
                         }
                     }
                     install(JsonFeature) {
-                        serializer = GsonSerializer()
+                        serializer = KotlinxSerializer()
                     }
                 }
             } else {
@@ -71,7 +72,7 @@ class WmClient private constructor(
                 wmclient.virtualCaps = info.virtualCaps.sortedArray()
                 wmclient.importantHeaders = info.importantHeaders
                 return wmclient
-            } catch (e: Exception){
+            } catch (e: Exception) {
                 throw WmException("Unable to create wm client: ${e.message}")
             }
         }
@@ -93,8 +94,9 @@ class WmClient private constructor(
     // Internal caches
     // Maps device ID -> JSONDeviceData
     private var devIDCache: LRUCache<String, JSONDeviceData>? = null
+
     // Maps concat headers (mainly UA) -> JSONDeviceData
-    private var headersCache : LRUCache<String, JSONDeviceData>? = null
+    private var headersCache: LRUCache<String, JSONDeviceData>? = null
 
     private lateinit var internalClient: HttpClient
 
@@ -173,7 +175,7 @@ class WmClient private constructor(
         val reqHeaders: MutableMap<String, String> = HashMap()
         for (headerName in importantHeaders) {
             val headerValue: String? = ktorRequest.headers[headerName]
-            if (headerValue!= null && headerValue.isNotEmpty()) {
+            if (headerValue != null && headerValue.isNotEmpty()) {
                 reqHeaders[headerName] = headerValue
             }
         }
@@ -187,7 +189,7 @@ class WmClient private constructor(
         val reqHeaders: MutableMap<String, String> = HashMap()
         for (headerName in importantHeaders) {
             val headerValue: String? = request.getHeader(headerName)
-            if (headerValue!= null && headerValue.isNotEmpty()) {
+            if (headerValue != null && headerValue.isNotEmpty()) {
                 reqHeaders[headerName] = headerValue
             }
         }
@@ -207,7 +209,7 @@ class WmClient private constructor(
 
         // creates a map with lowercase keys
         val lowerKeyMap = headers.mapKeys { it.key.lowercase(Locale.getDefault()) }
-        val reqHeaders = HashMap<String,String>()
+        val reqHeaders = HashMap<String, String>()
         for (headerName in importantHeaders) {
             val headerValue = lowerKeyMap[headerName.lowercase(Locale.getDefault())]
             if (headerValue != null && headerValue.isNotEmpty()) {
@@ -283,7 +285,7 @@ class WmClient private constructor(
         devIDCache = LRUCache() // this has the default cache size
     }
 
-    fun getActualCacheSizes(): Pair<Int,Int> {
+    fun getActualCacheSizes(): Pair<Int, Int> {
 
         var dIdCacheSize = 0
         if (devIDCache != null) {
@@ -310,33 +312,33 @@ class WmClient private constructor(
 
         try {
 
-        if (DEVICE_ID_CACHE_TYPE == cacheType) {
-            cacheKey = request.wurflId
-        } else if (HEADERS_CACHE_TYPE == cacheType) {
-            cacheKey = this.getHeadersCacheKey(request.lookupHeaders)
-        }
+            if (DEVICE_ID_CACHE_TYPE == cacheType) {
+                cacheKey = request.wurflId
+            } else if (HEADERS_CACHE_TYPE == cacheType) {
+                cacheKey = this.getHeadersCacheKey(request.lookupHeaders)
+            }
 
-        // First, do a cache lookup
-        if (cacheType.isNotEmpty() && cacheKey.isNotEmpty()) {
-            if (cacheType == DEVICE_ID_CACHE_TYPE && devIDCache != null) {
-                device = request.wurflId.let { devIDCache!!.getEntry(it) }
-                if (device != null) {
-                    return device
-                }
-            } else if (cacheType == HEADERS_CACHE_TYPE && headersCache != null) {
-                device = headersCache!!.getEntry(cacheKey)
-                if (device != null) {
-                    return device
+            // First, do a cache lookup
+            if (cacheType.isNotEmpty() && cacheKey.isNotEmpty()) {
+                if (cacheType == DEVICE_ID_CACHE_TYPE && devIDCache != null) {
+                    device = request.wurflId.let { devIDCache!!.getEntry(it) }
+                    if (device != null) {
+                        return device
+                    }
+                } else if (cacheType == HEADERS_CACHE_TYPE && headersCache != null) {
+                    device = headersCache!!.getEntry(cacheKey)
+                    if (device != null) {
+                        return device
+                    }
                 }
             }
-        }
 
-        device = runBlocking {
-            internalClient.post<JSONDeviceData>(createUrl(path)) {
-                contentType(ContentType.Application.Json)
-                body = request
+            device = runBlocking {
+                internalClient.post<JSONDeviceData>(createUrl(path)) {
+                    contentType(ContentType.Application.Json)
+                    body = request
+                }
             }
-        }
 
             if (device.error.isNotEmpty()) {
                 throw WmException("Unable to complete request to WM server:  $device.error")
@@ -437,7 +439,7 @@ class WmClient private constructor(
     fun setRequestedCapabilities(capsList: Array<String>?) {
         val capNames: MutableList<String> = ArrayList()
         val vcapNames: MutableList<String> = ArrayList()
-        if (capsList == null){
+        if (capsList == null) {
             requestedStaticCaps = null
             requestedVirtualCaps = null
             return
@@ -468,7 +470,7 @@ class WmClient private constructor(
         }
         try {
             val localOSes = runBlocking {
-                return@runBlocking  internalClient.get<Array<JSONDeviceOsVersions>>(createUrl("/v2/alldeviceosversions/json"))
+                return@runBlocking internalClient.get<Array<JSONDeviceOsVersions>>(createUrl("/v2/alldeviceosversions/json"))
             }
 
             val dmMap: MutableMap<String, MutableList<String>> = HashMap()
@@ -502,7 +504,7 @@ class WmClient private constructor(
         // No values already loaded, let's do it.
         try {
             val localMakeModels = runBlocking {
-                return@runBlocking  internalClient.get<Array<JSONMakeModel>>(createUrl("/v2/alldevices/json"))
+                return@runBlocking internalClient.get<Array<JSONMakeModel>>(createUrl("/v2/alldevices/json"))
             }
 
             val dmMap: MutableMap<String, MutableList<JSONModelMktName>> = HashMap()

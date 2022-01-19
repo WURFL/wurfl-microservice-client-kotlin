@@ -6,6 +6,7 @@ tasks.withType<KotlinCompile> {
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm") version "1.6.10"
+    kotlin("plugin.serialization") version "1.6.10"
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
@@ -68,14 +69,15 @@ publishing {
         // This dependency is used internally, and not exposed to consumers on their own compile classpath.
         implementation("com.google.guava:guava:30.1.1-jre")
 
-        // Use ktor with Apache engine as HTTP client and gson as json serializer/deserializer
+        // Use ktor with Apache engine as HTTP client and kotlinx as json serializer/deserializer
         implementation("io.ktor:ktor-client-core:$ktorVersion")
         implementation("io.ktor:ktor-client-apache:$ktorVersion")
         implementation("io.ktor:ktor-client-serialization:$ktorVersion")
-        implementation("io.ktor:ktor-client-gson:$ktorVersion")
-        implementation("io.ktor:ktor-gson:$ktorVersion")
-        implementation("javax.servlet:javax.servlet-api:4.0.1")
 
+        // this contains ApplicationRequest
+        implementation("io.ktor:ktor-server-core:1.6.7")
+        // this contains HTTPServletRequest
+        implementation("javax.servlet:javax.servlet-api:4.0.1")
 
         // test mocks
         testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")

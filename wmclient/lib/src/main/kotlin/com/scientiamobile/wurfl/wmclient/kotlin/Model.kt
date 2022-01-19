@@ -12,73 +12,81 @@ limitations under the License.
 */
 package com.scientiamobile.wurfl.wmclient.kotlin
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class JSONInfoData(
-    @SerializedName("wurfl_api_version")
+    @SerialName("wurfl_api_version")
     val wurflApiVersion: String,
-    @SerializedName("wm_version")
+    @SerialName("wm_version")
     val wmVersion: String,
-    @SerializedName("wurfl_info")
+    @SerialName("wurfl_info")
     val wurflInfo: String,
-    @SerializedName("important_headers")
+    @SerialName("important_headers")
     val importantHeaders: Array<String>,
-    @SerializedName("static_caps")
+    @SerialName("static_caps")
     val staticCaps: Array<String>,
-    @SerializedName("virtual_caps")
+    @SerialName("virtual_caps")
     val virtualCaps: Array<String>,
-    @SerializedName("ltime")
+    @SerialName("ltime")
     val ltime: String,
 )
 
 /**
  * Holds the detected device data received from wm server.
  */
+@Serializable
 data class JSONDeviceData(
-    @SerializedName("capabilities")
-    val capabilities: Map<String, String>,
-    @SerializedName("error")
+    @SerialName("capabilities")
+    val capabilities: Map<String, String>? = null,
+    @SerialName("error")
     val error: String,
-    @SerializedName("mtime")
+    @SerialName("mtime")
     val mtime: Int,
-    @SerializedName("ltime")
+    @SerialName("ltime")
     val ltime: String? = null,
+
+    val apiVersion: String
 )
 
 /**
  * Holds data relevant for the HTTP request that will be sent to wm server
  */
+@Serializable
 data class Request(
-    @SerializedName("lookup_headers")
+    @SerialName("lookup_headers")
     val lookupHeaders: Map<String, String>,
-    @SerializedName("requested_caps")
+    @SerialName("requested_caps")
     val requestedCaps: Array<String>?,
-    @SerializedName("requested_vcaps")
+    @SerialName("requested_vcaps")
     val requestedVcaps: Array<String>?,
-    @SerializedName("wurfl_id")
+
     val wurflId: String,
 )
-
+@Serializable
 data class JSONDeviceOsVersions(
-    @SerializedName("device_os")
+    @SerialName("device_os")
     var osName: String,
-    @SerializedName("device_os_version")
+    @SerialName("device_os_version")
     var osVersion: String = "",
 )
 
+@Serializable
 data class JSONMakeModel(
-    @SerializedName("brand_name")
+    @SerialName("brand_name")
     var brandName: String = "",
-    @SerializedName("model_name")
+    @SerialName("model_name")
     var modelName: String = "",
-    @SerializedName("marketing_name")
+    @SerialName("marketing_name")
     var marketingName: String = "",
 )
 
+@Serializable
 data class JSONModelMktName(
-    @SerializedName("model_name")
+    @SerialName("model_name")
     var modelName: String,
-    @SerializedName("marketing_name")
+    @SerialName("marketing_name")
     var marketingName: String,
 )
 
