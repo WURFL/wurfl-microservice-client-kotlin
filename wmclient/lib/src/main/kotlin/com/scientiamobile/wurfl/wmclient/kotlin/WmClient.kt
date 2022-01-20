@@ -13,7 +13,7 @@ limitations under the License.
 package com.scientiamobile.wurfl.wmclient.kotlin
 
 import io.ktor.client.*
-import io.ktor.client.engine.apache.*
+import io.ktor.client.engine.cio.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -47,14 +47,15 @@ class WmClient private constructor(
 
             val wmclient = WmClient(scheme, host, port, uri)
             if (scheme.equals("http", ignoreCase = true) || scheme.equals("https", ignoreCase = true)) {
-                wmclient.internalClient = HttpClient(Apache) {
+                wmclient.internalClient = HttpClient(CIO) {
                     engine {
-                        connectTimeout = DEFAULT_CONN_TIMEOUT
-                        connectionRequestTimeout = DEFAULT_CONN_TIMEOUT
-                        socketTimeout = DEFAULT_RW_TIMEOUT
-                        customizeClient {
-                            setMaxConnPerRoute(100)
-                            setMaxConnTotal(200)
+                        maxConnectionsCount = 200
+                        requestTimeout = DEFAULT_RW_TIMEOUT.toLong()
+                        endpoint {
+                            // this: EndpointConfig
+                            maxConnectionsPerRoute = 100
+                            connectTimeout = DEFAULT_CONN_TIMEOUT.toLong()
+                            connectAttempts = 3
                         }
                     }
                     install(JsonFeature) {
@@ -112,11 +113,12 @@ class WmClient private constructor(
     private var deviceMakesMap: Map<String, List<JSONModelMktName>> = emptyMap()
 
     private fun createUrl(path: String): String {
-        var basePath = "$scheme://$host:$port/"
+        var basePath = "$scheme://$host:$port"
         if (baseURI.isNotEmpty()) {
-            basePath += "$baseURI/"
+            basePath += "/$baseURI"
         }
-        return "$basePath/$path"
+        val url = "$basePath$path"
+        return url
     }
 
     /**

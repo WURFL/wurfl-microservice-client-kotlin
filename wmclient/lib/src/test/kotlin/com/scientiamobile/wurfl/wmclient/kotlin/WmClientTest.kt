@@ -58,9 +58,19 @@ class WmClientTest {
         WmClient.create("", "", "", "")
     }
 
-    @Test(expected = WmException::class)
+
+    @Test
     fun testCreateWithoutHostTest() {
-        WmClient.create("http", "", "8080", "")
+    // It seems CIO engine assumes empty host == localhost
+        val wmclient = WmClient.create("http", "", "8080", "")
+        val info = wmclient.getInfo()
+        assertNotNull(info)
+        assertNotNull(info.wurflApiVersion)
+        assertNotNull(info.wurflInfo)
+        assertTrue { info.importantHeaders.isNotEmpty() }
+        assertTrue { info.staticCaps.isNotEmpty() }
+        assertTrue { info.virtualCaps.isNotEmpty() }
+        wmclient.destroy()
     }
 
     @Test(expected = WmException::class)
