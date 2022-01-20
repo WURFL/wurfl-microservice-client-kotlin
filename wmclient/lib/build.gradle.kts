@@ -6,6 +6,7 @@ tasks.withType<KotlinCompile> {
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm") version "1.6.10"
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.6.10"
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
@@ -72,8 +73,7 @@ publishing {
         implementation("io.ktor:ktor-client-core:$ktorVersion")
         implementation("io.ktor:ktor-client-apache:$ktorVersion")
         implementation("io.ktor:ktor-client-serialization:$ktorVersion")
-        implementation("io.ktor:ktor-client-gson:$ktorVersion")
-        implementation("io.ktor:ktor-gson:$ktorVersion")
+        implementation("io.ktor:ktor-serialization:$ktorVersion")
         implementation("javax.servlet:javax.servlet-api:4.0.1")
 
 

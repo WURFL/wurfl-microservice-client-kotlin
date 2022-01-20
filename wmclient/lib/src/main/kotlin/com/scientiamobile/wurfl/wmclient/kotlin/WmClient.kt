@@ -15,6 +15,7 @@ package com.scientiamobile.wurfl.wmclient.kotlin
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
 import io.ktor.client.features.json.*
+import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.request.*
@@ -58,7 +59,7 @@ class WmClient private constructor(
                         }
                     }
                     install(JsonFeature) {
-                        serializer = GsonSerializer()
+                        serializer = KotlinxSerializer()
                     }
                 }
             } else {
