@@ -19,6 +19,7 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager
 import org.apache.hc.core5.util.Timeout
 import org.http4k.client.ApacheClient
 import org.http4k.core.Body
+import org.http4k.core.ContentType
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.format.KotlinxSerialization.auto
@@ -33,6 +34,7 @@ private const val HEADERS_CACHE_TYPE = "head-cache"
 // Timeouts in milliseconds
 private const val DEFAULT_CONN_TIMEOUT: Int = 10000
 private const val DEFAULT_RW_TIMEOUT: Int = 60000
+private  val deviceLens = Body.auto<JSONDeviceData>().toLens()
 
 class WmClient private constructor(
     private val scheme: String,
@@ -60,6 +62,7 @@ class WmClient private constructor(
                         .setResponseTimeout(Timeout.ofMilliseconds(DEFAULT_RW_TIMEOUT.toLong()))
                         .setConnectTimeout(Timeout.ofMilliseconds(DEFAULT_CONN_TIMEOUT.toLong()))
                         .setConnectionRequestTimeout(Timeout.ofMilliseconds(DEFAULT_CONN_TIMEOUT.toLong()))
+                        .setContentCompressionEnabled(true)
                         .build()).setConnectionManager(connManager)
                         .build()
 
@@ -135,6 +138,7 @@ class WmClient private constructor(
     @Throws(WmException::class)
     fun getInfo(): JSONInfoData {
         val req = org.http4k.core.Request(Method.GET, createUrl("/v2/getinfo/json"))
+        req.header("Content-Type", ContentType.APPLICATION_JSON.toHeaderValue())
         val infoLens = Body.auto<JSONInfoData>().toLens()
         val response = internalClient(req)
         val info = infoLens[response]
@@ -340,11 +344,14 @@ class WmClient private constructor(
                 }
             }
 
-            val deviceLens = Body.auto<JSONDeviceData>().toLens()
             var req = org.http4k.core.Request(Method.POST, createUrl(path))
+            req.header("Content-Type", ContentType.APPLICATION_JSON.toHeaderValue())
             req = Body.auto<Request>().toLens().inject(request, req)
             val response = internalClient(req)
+
             device = deviceLens[response]
+            response.body.stream.close()
+            response.close()
 
             if (device.error.isNotEmpty()) {
                 throw WmException("Unable to complete request to WM server:  $device.error")
@@ -352,9 +359,9 @@ class WmClient private constructor(
 
             // Check if caches must be cleared before adding a new device
             clearCachesIfNeeded(device.ltime)
-            if (cacheType == HEADERS_CACHE_TYPE && devIDCache != null && "" != cacheKey) {
+            if (cacheType == HEADERS_CACHE_TYPE && devIDCache != null && cacheKey.isNotEmpty()) {
                 headersCache?.putEntry(cacheKey, device)
-            } else if (cacheType == DEVICE_ID_CACHE_TYPE && headersCache != null && "" != cacheKey) {
+            } else if (cacheType == DEVICE_ID_CACHE_TYPE && headersCache != null && cacheKey.isNotEmpty()) {
                 devIDCache?.putEntry(cacheKey, device)
             }
             return device
