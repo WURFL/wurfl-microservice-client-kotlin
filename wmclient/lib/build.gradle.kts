@@ -60,7 +60,7 @@ publishing {
 
     dependencies {
         // Align versions of all Kotlin components
-        implementation("org.jetbrains.kotlin:kotlin-bom")
+        implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
 
         // Use the Kotlin JDK 8 standard library.
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
@@ -75,7 +75,6 @@ publishing {
         implementation("io.ktor:ktor-client-gson:$ktorVersion")
         implementation("io.ktor:ktor-gson:$ktorVersion")
         implementation("javax.servlet:javax.servlet-api:4.0.1")
-
 
         // test mocks
         testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
