@@ -13,7 +13,7 @@ limitations under the License.
 package com.scientiamobile.wurfl.wmclient.kotlin
 
 import io.ktor.client.*
-import io.ktor.client.engine.apache.*
+import io.ktor.client.engine.okhttp.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -21,6 +21,7 @@ import io.ktor.request.*
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.TimeUnit
 import javax.servlet.http.HttpServletRequest
 
 
@@ -47,15 +48,15 @@ class WmClient private constructor(
 
             val wmclient = WmClient(scheme, host, port, uri)
             if (scheme.equals("http", ignoreCase = true) || scheme.equals("https", ignoreCase = true)) {
-                wmclient.internalClient = HttpClient(Apache) {
+                wmclient.internalClient = HttpClient(OkHttp) {
                     engine {
-                        connectTimeout = DEFAULT_CONN_TIMEOUT
-                        connectionRequestTimeout = DEFAULT_CONN_TIMEOUT
-                        socketTimeout = DEFAULT_RW_TIMEOUT
-                        customizeClient {
-                            setMaxConnPerRoute(100)
-                            setMaxConnTotal(200)
-                        }
+                      clientCacheSize = 16
+                      config {
+                          callTimeout(DEFAULT_RW_TIMEOUT.toLong(), TimeUnit.MILLISECONDS)
+                          connectTimeout(DEFAULT_CONN_TIMEOUT.toLong(), TimeUnit.MILLISECONDS)
+                          readTimeout(DEFAULT_RW_TIMEOUT.toLong(), TimeUnit.MILLISECONDS)
+                          writeTimeout(DEFAULT_RW_TIMEOUT.toLong(), TimeUnit.MILLISECONDS)
+                      }
                     }
                     install(JsonFeature) {
                         serializer = GsonSerializer()
@@ -112,11 +113,11 @@ class WmClient private constructor(
     private var deviceMakesMap: Map<String, List<JSONModelMktName>> = emptyMap()
 
     private fun createUrl(path: String): String {
-        var basePath = "$scheme://$host:$port/"
+        var basePath = "$scheme://$host:$port"
         if (baseURI.isNotEmpty()) {
-            basePath += "$baseURI/"
+            basePath += "/$baseURI"
         }
-        return "$basePath/$path"
+        return "$basePath$path"
     }
 
     /**
