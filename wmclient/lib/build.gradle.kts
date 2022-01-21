@@ -60,7 +60,7 @@ publishing {
 
     dependencies {
         // Align versions of all Kotlin components
-        implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
+        implementation("org.jetbrains.kotlin:kotlin-bom")
 
         // Use the Kotlin JDK 8 standard library.
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
