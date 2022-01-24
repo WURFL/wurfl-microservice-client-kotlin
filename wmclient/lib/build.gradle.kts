@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
+
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "11"
 }
@@ -39,6 +40,9 @@ tasks {
         from(sourceSets.main.get().allSource)
     }
 
+    dokkaHtml {
+        moduleName.set(rootProject.name)
+    }
 
     val dokkaJar = register<Jar>("dokkaJar") {
         from(dokkaHtml)
@@ -66,6 +70,8 @@ publishing {
         create<MavenPublication>("wmclient-publish") {
             from(components.findByName("kotlin"))
             pom {
+                name.set("WURFL Microservice client for Kotlin")
+                url.set("https://github.com/WURFL/wurfl-microservice-client-kotlin")
                 groupId = "$group"
                 artifactId = rootProject.name
                 version = projectVersion
@@ -76,6 +82,11 @@ publishing {
                         url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                     }
                 }
+                scm {
+                    connection.set("scm:git:git@github.com:WURFL/wurfl-microservice-client-kotlin.git")
+                    developerConnection.set("scm:git:git@github.com:WURFL/wurfl-microservice-client-kotlin.git")
+                    url.set("https://github.com/WURFL/wurfl-microservice-client-kotlin/tree/master")
+                }
             }
 
             repositories {
@@ -84,8 +95,8 @@ publishing {
                 //mavenLocal()
                 maven {
                     credentials {
-                        //username = "$usr"
-                        //password = "$pwd"
+                        username = System.getenv("NEXUS.USER")
+                        password = System.getenv("NEXUS.PASSWORD")
                     }
 
                     url = URI("https://s01.oss.sonatype.org/")
@@ -97,32 +108,40 @@ publishing {
 
 
 
-    dependencies {
-        // Align versions of all Kotlin components
-        implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
+dependencies {
+    // Align versions of all Kotlin components
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
 
-        // Use the Kotlin JDK 8 standard library.
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    // Use the Kotlin JDK 8 standard library.
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
-        // This dependency is used internally, and not exposed to consumers on their own compile classpath.
-        implementation("com.google.guava:guava:30.1.1-jre")
+    // This dependency is used internally, and not exposed to consumers on their own compile classpath.
+    implementation("com.google.guava:guava:30.1.1-jre")
 
-        // Use ktor with Apache engine as HTTP client and gson as json serializer/deserializer
-        implementation("io.ktor:ktor-client-core:$ktorVersion")
-        implementation("io.ktor:ktor-client-apache:$ktorVersion")
-        implementation("io.ktor:ktor-client-serialization:$ktorVersion")
-        implementation("io.ktor:ktor-client-gson:$ktorVersion")
-        implementation("io.ktor:ktor-gson:$ktorVersion")
-        implementation("javax.servlet:javax.servlet-api:4.0.1")
+    // Use ktor with Apache engine as HTTP client and gson as json serializer/deserializer
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-apache:$ktorVersion")
+    implementation("io.ktor:ktor-client-serialization:$ktorVersion")
+    implementation("io.ktor:ktor-client-gson:$ktorVersion")
+    implementation("io.ktor:ktor-gson:$ktorVersion")
+    implementation("javax.servlet:javax.servlet-api:4.0.1")
 
-        // test mocks
-        testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
-        // we use mockito to mock old Java HttpServletRequest object and others
-        testImplementation("org.mockito:mockito-core:4.2.0")
+    // test mocks
+    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
+    // we use mockito to mock old Java HttpServletRequest object and others
+    testImplementation("org.mockito:mockito-core:4.2.0")
 
-        // Use the Kotlin test library.
-        testImplementation("org.jetbrains.kotlin:kotlin-test")
+    // Use the Kotlin test library.
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
 
-        // Use the Kotlin JUnit integration.
-        testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
-    }
+    // Use the Kotlin JUnit integration.
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+}
+
+signing {
+    useInMemoryPgpKeys(
+        System.getProperty("FINGERPRINT"),
+        System.getProperty("GPG.PASSPHRASE")
+    )
+    sign(publishing.publications)
+}
