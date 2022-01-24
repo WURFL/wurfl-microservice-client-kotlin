@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.net.URI
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "11"
 }
@@ -11,6 +12,29 @@ plugins {
     `java-library`
     // Apply the plugin for maven publish
     `maven-publish`
+    signing
+
+}
+
+tasks {
+
+    javadoc {
+        source += sourceSets.main.get().allSource
+    }
+
+    val sourcesJar by creating(Jar::class) {
+        archiveClassifier.set("sources")
+        from(sourceSets.main.get().allSource)
+    }
+
+    artifacts {
+        archives(sourcesJar)
+        archives(jar)
+    }
+
+    artifacts {
+        add("archives", sourcesJar)
+    }
 }
 
 repositories {
@@ -28,6 +52,8 @@ allprojects {
     group = "com.scientiamobile.wurflmicroservice"
     version = projectVersion
 }
+
+
 
 publishing {
     publications {
@@ -50,7 +76,14 @@ publishing {
                 // Use mavenLocal only if you want to install your development artifact into a maven local repo
                 // using publishToMavenLocal command
                 //mavenLocal()
-                mavenCentral()
+                maven {
+                    credentials {
+                        //username = "$usr"
+                        //password = "$pwd"
+                    }
+
+                    url = URI("https://s01.oss.sonatype.org/")
+                }
             }
         }
     }
