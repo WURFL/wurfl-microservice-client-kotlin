@@ -13,28 +13,8 @@ plugins {
     // Apply the plugin for maven publish
     `maven-publish`
     signing
+    id("org.jetbrains.dokka") version "1.6.0"
 
-}
-
-tasks {
-
-    javadoc {
-        source += sourceSets.main.get().allSource
-    }
-
-    val sourcesJar by creating(Jar::class) {
-        archiveClassifier.set("sources")
-        from(sourceSets.main.get().allSource)
-    }
-
-    artifacts {
-        archives(sourcesJar)
-        archives(jar)
-    }
-
-    artifacts {
-        add("archives", sourcesJar)
-    }
 }
 
 repositories {
@@ -53,7 +33,33 @@ allprojects {
     version = projectVersion
 }
 
+tasks {
+    val sourcesJar by creating(Jar::class) {
+        archiveClassifier.set("sources")
+        from(sourceSets.main.get().allSource)
+    }
 
+
+    val dokkaJar = register<Jar>("dokkaJar") {
+        from(dokkaHtml)
+        dependsOn(dokkaHtml)
+        archiveClassifier.set("javadoc")
+    }
+
+    withType<Jar> {
+        metaInf.with(
+            copySpec {
+                from("${project.rootDir}/LICENSE")
+            }
+        )
+    }
+
+    artifacts {
+        archives(sourcesJar)
+        archives(jar)
+        archives(dokkaJar)
+    }
+}
 
 publishing {
     publications {
