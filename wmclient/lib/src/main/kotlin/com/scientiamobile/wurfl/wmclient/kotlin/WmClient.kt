@@ -31,6 +31,12 @@ private const val HEADERS_CACHE_TYPE = "head-cache"
 private const val DEFAULT_CONN_TIMEOUT: Int = 10000
 private const val DEFAULT_RW_TIMEOUT: Int = 60000
 
+/**
+ * Main class for Java WM client. Performs requests to WURFL Microservice server and handles responses from it.<br>
+ * @author Scientiamobile Inc.
+ * @author  Andrea Castello
+ * Date: 10/01/2022.
+ */
 class WmClient private constructor(
     private val scheme: String,
     private val host: String,
@@ -39,6 +45,17 @@ class WmClient private constructor(
 ) {
 
     companion object {
+        /**
+         * Creates an instance of a WURFL Microservice client
+         *
+         * @param scheme  protocol scheme
+         * @param host    host of the WM server
+         * @param port    port of the WM server
+         * @param baseURI any base URI which must be added after the host (NOT including the endpoints, which are handled by the client).
+         *                This may be useful, for example, with thrird parties VMs (like docker or AWS). Leave empty or null if not needed.
+         * @return The instance of the WM client
+         * @throws WmException In case a connection error occurs
+         */
         fun create(scheme: String, host: String, port: String, baseURI: String?): WmClient {
             val uri = baseURI ?: ""
             if (scheme.isEmpty()) {
@@ -126,6 +143,10 @@ class WmClient private constructor(
         return "1.0.0"
     }
 
+    /**
+     * @return A JSONInfoData instance holding the capabilities exposed from WM server, the headers used for device detection, WURFL file and API version
+     * @throws WmException If server cannot send data or incomplete data are sent
+     */
     @Throws(WmException::class)
     fun getInfo(): JSONInfoData {
         val info = runBlocking {
@@ -278,11 +299,20 @@ class WmClient private constructor(
         }
     }
 
+    /**
+     * Sets the client cache size
+     *
+     * @param uaMaxEntries maximum cache dimension
+     */
     fun setCacheSize(uaMaxEntries: Int) {
         headersCache = LRUCache(uaMaxEntries)
         devIDCache = LRUCache() // this has the default cache size
     }
 
+    /**
+     * @return an Int pair with the sizes of the cache, the first element is the size of the cache used in lookupDeviceID calls
+     * while the second element is the cache used in request/heaers/useragent based API calls
+     */
     fun getActualCacheSizes(): Pair<Int,Int> {
 
         var dIdCacheSize = 0
