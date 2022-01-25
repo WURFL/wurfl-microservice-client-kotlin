@@ -35,6 +35,11 @@ allprojects {
 }
 
 tasks {
+
+    val wrapper by creating(Wrapper::class) {
+        version = "7.2"
+    }
+
     val sourcesJar by creating(Jar::class) {
         archiveClassifier.set("sources")
         from(sourceSets.main.get().allSource)
