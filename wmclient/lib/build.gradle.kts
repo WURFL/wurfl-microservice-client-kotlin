@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.net.URI
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "11"
@@ -95,12 +94,11 @@ publishing {
                 // using publishToMavenLocal command
                 //mavenLocal()
                 maven {
+                    url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
                     credentials {
                         username = System.getenv("NEXUS.USER")
                         password = System.getenv("NEXUS.PASSWORD")
                     }
-
-                    url = URI("https://s01.oss.sonatype.org/")
                 }
             }
         }
@@ -140,9 +138,5 @@ dependencies {
 }
 
 signing {
-    useInMemoryPgpKeys(
-        System.getProperty("FINGERPRINT"),
-        System.getProperty("GPG.PASSPHRASE")
-    )
     sign(publishing.publications)
 }
