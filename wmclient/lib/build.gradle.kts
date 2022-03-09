@@ -69,9 +69,9 @@ publishing {
     publications {
         create<MavenPublication>("wmclient-publish") {
             from(components.findByName("kotlin"))
-            artifact("lib/build/libs/wurfl-microservice-kotlin-$version.jar")
-            artifact("lib/build/libs/wurfl-microservice-kotlin-$version-javadoc.jar")
-            artifact("lib/build/libs/wurfl-microservice-kotlin-$version-sources.jar")
+            artifact("build/libs/wurfl-microservice-kotlin-$version.jar")
+            artifact("build/libs/wurfl-microservice-kotlin-$version-javadoc.jar")
+            artifact("build/libs/wurfl-microservice-kotlin-$version-sources.jar")
             pom {
                 name.set("WURFL Microservice client for Kotlin")
                 url.set("https://github.com/WURFL/wurfl-microservice-client-kotlin")
