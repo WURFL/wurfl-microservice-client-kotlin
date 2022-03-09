@@ -94,7 +94,7 @@ publishing {
                 // using publishToMavenLocal command
                 //mavenLocal()
                 maven {
-                    url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                    url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
                     credentials {
                         username = project.findProperty("mavenCentralUsername").toString()
                         password = project.findProperty("mavenCentralPassword").toString()
