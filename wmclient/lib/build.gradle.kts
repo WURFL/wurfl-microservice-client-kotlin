@@ -77,11 +77,20 @@ publishing {
                 groupId = "$group"
                 artifactId = rootProject.name
                 version = projectVersion
+                description.set("Wurfl microservice client API for kotlin programming language")
                 packaging = "jar"
                 licenses {
                     license {
                         name.set("The Apache License, Version 2.0")
                         url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("scientiamobile")
+                        name.set("Scientiamobile")
+                        organization.set("ScientiaMobile, Inc. Reston, VA, USA")
+                        email.set("support@scientiamobile.com")
                     }
                 }
                 scm {
