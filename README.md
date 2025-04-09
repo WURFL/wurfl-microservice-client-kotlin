@@ -4,7 +4,10 @@
 
 - Gradle 7.2
 - Java 11 or above
-- Kotlin 1.6.10
+- Kotlin 1.6.10 - 1.9.x - [Current project file build.gradle.kts](https://github.com/WURFL/wurfl-microservice-client-kotlin/blob/master/wmclient/lib/build.gradle.kts)
+  is not compatible with Kotlin 2.0.0 but you can easily edit it to compile the client to run with Kotlin 2.0.0
+
+
 
 ### Ktor client library - HTTP Client Engines
 WURFL Microservice kotlin uses Ktor, a library that allows using different HTTP client implementations (aka "engines").
