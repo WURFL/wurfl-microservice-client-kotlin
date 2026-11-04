@@ -204,4 +204,10 @@ class WmClientStubServerTest {
         responses["/v2/getinfo/json"] = Pair(200, """{"important_headers":[],"static_caps":[],"virtual_caps":[]}""")
         assertFailsWith<WmException> { WmClient.create("http", "localhost", port, "") }
     }
+
+    @Test
+    fun infoWithEmptyVersionsButVirtualCapsFailsCreate() {
+        responses["/v2/getinfo/json"] = Pair(200, """{"wurfl_api_version":"","wm_version":"","wurfl_info":"","important_headers":[],"static_caps":[],"virtual_caps":["is_smartphone"]}""")
+        assertFailsWith<WmException> { WmClient.create("http", "localhost", port, "") }
+    }
 }
