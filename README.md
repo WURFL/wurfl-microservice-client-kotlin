@@ -1,13 +1,22 @@
-# wurfl-microservice-client-kotlin
+# ScientiaMobile WURFL Microservice Client for Kotlin
+
+WURFL Microservice (by ScientiaMobile, Inc.) is a mobile device detection service that can quickly and accurately detect over 500 capabilities of visiting devices. It can differentiate between portable mobile devices, desktop devices, SmartTVs and any other types of devices that have a web browser.
+
+This is the Kotlin Client API for accessing the WURFL Microservice. The API is released under Open-Source and can be integrated with other open-source or proprietary code. In order to operate, it requires access to a running instance of the WURFL Microservice product, such as:
+
+- [WURFL Microservice for Docker](https://www.scientiamobile.com/products/wurfl-microservice-docker-detect-device/)
+
+- [WURFL Microservice for AWS](https://www.scientiamobile.com/products/wurfl-device-detection-microservice-aws/)
+
+- [WURFL Microservice for Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps?search=WURFL%20Microservice&page=1)
+
+- [WURFL Microservice for Google Cloud Platform](https://console.cloud.google.com/marketplace/browse?filter=partner:ScientiaMobile%20Inc.&q=WURFL%20Microservice)
 
 ## Requisites
-
 - Gradle 7.2
 - Java 11 or above
 - Kotlin 1.6.10 - 1.9.x - [Current project file build.gradle.kts](https://github.com/WURFL/wurfl-microservice-client-kotlin/blob/master/wmclient/lib/build.gradle.kts)
   is not compatible with Kotlin 2.0.0 but you can easily edit it to compile the client to run with Kotlin 2.0.0
-
-
 
 ### Ktor client library - HTTP Client Engines
 WURFL Microservice kotlin uses Ktor, a library that allows using different HTTP client implementations (aka "engines").
