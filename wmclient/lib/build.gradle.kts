@@ -105,7 +105,11 @@ publishing {
                 // using publishToMavenLocal command
                 //mavenLocal()
                 maven {
-                    url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                    // OSSRH (oss.sonatype.org) was retired: use the Central Portal's OSSRH Staging API compatibility
+                    // endpoint. Credentials must be a Central Portal user token. After the upload, the deployment
+                    // must be handed over to the Portal (POST /manual/upload/defaultRepository/<namespace>),
+                    // which the TeamCity job does in a dedicated step.
+                    url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
                     credentials {
                         username = project.findProperty("mavenCentralUsername").toString()
                         password = project.findProperty("mavenCentralPassword").toString()
