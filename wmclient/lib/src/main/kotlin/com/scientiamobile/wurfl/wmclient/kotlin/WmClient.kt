@@ -140,7 +140,7 @@ class WmClient private constructor(
      * @return This client API version
      */
     fun getApiVersion(): String {
-        return "1.0.0"
+        return "1.0.1"
     }
 
     /**
@@ -368,8 +368,8 @@ class WmClient private constructor(
             }
         }
 
-            if (device.error.isNotEmpty()) {
-                throw WmException("Unable to complete request to WM server:  $device.error")
+            if (!device.error.isNullOrEmpty()) {
+                throw WmException("Unable to complete request to WM server: ${device.error}")
             }
 
             // Check if caches must be cleared before adding a new device

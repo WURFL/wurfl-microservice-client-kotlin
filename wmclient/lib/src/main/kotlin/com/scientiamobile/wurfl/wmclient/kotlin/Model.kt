@@ -16,19 +16,19 @@ import com.google.gson.annotations.SerializedName
 
 data class JSONInfoData(
     @SerializedName("wurfl_api_version")
-    val wurflApiVersion: String,
+    val wurflApiVersion: String = "",
     @SerializedName("wm_version")
-    val wmVersion: String,
+    val wmVersion: String = "",
     @SerializedName("wurfl_info")
-    val wurflInfo: String,
+    val wurflInfo: String = "",
     @SerializedName("important_headers")
-    val importantHeaders: Array<String>,
+    val importantHeaders: Array<String> = emptyArray(),
     @SerializedName("static_caps")
-    val staticCaps: Array<String>,
+    val staticCaps: Array<String> = emptyArray(),
     @SerializedName("virtual_caps")
-    val virtualCaps: Array<String>,
+    val virtualCaps: Array<String> = emptyArray(),
     @SerializedName("ltime")
-    val ltime: String,
+    val ltime: String = "",
 )
 
 /**
@@ -36,11 +36,11 @@ data class JSONInfoData(
  */
 data class JSONDeviceData(
     @SerializedName("capabilities")
-    val capabilities: Map<String, String>,
+    val capabilities: Map<String, String> = emptyMap(),
     @SerializedName("error")
-    val error: String,
+    val error: String? = null,
     @SerializedName("mtime")
-    val mtime: Int,
+    val mtime: Int = 0,
     @SerializedName("ltime")
     val ltime: String? = null,
 )
@@ -50,18 +50,18 @@ data class JSONDeviceData(
  */
 data class Request(
     @SerializedName("lookup_headers")
-    val lookupHeaders: Map<String, String>,
+    val lookupHeaders: Map<String, String> = emptyMap(),
     @SerializedName("requested_caps")
-    val requestedCaps: Array<String>?,
+    val requestedCaps: Array<String>? = null,
     @SerializedName("requested_vcaps")
-    val requestedVcaps: Array<String>?,
+    val requestedVcaps: Array<String>? = null,
     @SerializedName("wurfl_id")
-    val wurflId: String,
+    val wurflId: String = "",
 )
 
 data class JSONDeviceOsVersions(
     @SerializedName("device_os")
-    var osName: String,
+    var osName: String = "",
     @SerializedName("device_os_version")
     var osVersion: String = "",
 )
@@ -77,9 +77,9 @@ data class JSONMakeModel(
 
 data class JSONModelMktName(
     @SerializedName("model_name")
-    var modelName: String,
+    var modelName: String = "",
     @SerializedName("marketing_name")
-    var marketingName: String,
+    var marketingName: String = "",
 )
 
 /**

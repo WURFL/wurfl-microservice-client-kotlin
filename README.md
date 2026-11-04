@@ -24,20 +24,20 @@ To add it as a Maven dependency you can do:
 <dependency>
   <groupId>com.scientiamobile.wurflmicroservice</groupId>
   <artifactId>wurfl-microservice-kotlin</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 </dependency>
 ```
 
 If you are using `Gradle` as a build tool, you can add it to your project with this line (groovy DSL)
 
 ```groovy
-implementation 'com.scientiamobile.wurflmicroservice:wurfl-microservice-kotlin:1.0.0'
+implementation 'com.scientiamobile.wurflmicroservice:wurfl-microservice-kotlin:1.0.1'
 ```
 
 or (Kotlin DSL)
 
 ```kotlin
-implementation("com.scientiamobile.wurflmicroservice:wurfl-microservice-kotlin:1.0.0")
+implementation("com.scientiamobile.wurflmicroservice:wurfl-microservice-kotlin:1.0.1")
 ```
 
 
