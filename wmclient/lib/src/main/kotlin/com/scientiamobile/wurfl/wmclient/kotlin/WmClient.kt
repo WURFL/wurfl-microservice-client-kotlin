@@ -140,7 +140,7 @@ class WmClient private constructor(
      * @return This client API version
      */
     fun getApiVersion(): String {
-        return "1.0.0"
+        return "1.0.1"
     }
 
     /**
@@ -330,7 +330,7 @@ class WmClient private constructor(
     private fun checkData(info: JSONInfoData): Boolean {
         // If these are empty there's something wrong, like server returning a json error message or a different data format
         return (info.wmVersion.isNotEmpty() && info.wurflApiVersion.isNotEmpty() && info.wurflInfo.isNotEmpty()
-                && (info.staticCaps.isNotEmpty()) || info.virtualCaps.isNotEmpty())
+                && (info.staticCaps.isNotEmpty() || info.virtualCaps.isNotEmpty()))
     }
 
     @Throws(WmException::class)
@@ -368,15 +368,15 @@ class WmClient private constructor(
             }
         }
 
-            if (device.error.isNotEmpty()) {
-                throw WmException("Unable to complete request to WM server:  $device.error")
+            if (!device.error.isNullOrEmpty()) {
+                throw WmException("Unable to complete request to WM server: ${device.error}")
             }
 
             // Check if caches must be cleared before adding a new device
             clearCachesIfNeeded(device.ltime)
-            if (cacheType == HEADERS_CACHE_TYPE && devIDCache != null && "" != cacheKey) {
+            if (cacheType == HEADERS_CACHE_TYPE && headersCache != null && "" != cacheKey) {
                 headersCache?.putEntry(cacheKey, device)
-            } else if (cacheType == DEVICE_ID_CACHE_TYPE && headersCache != null && "" != cacheKey) {
+            } else if (cacheType == DEVICE_ID_CACHE_TYPE && devIDCache != null && "" != cacheKey) {
                 devIDCache?.putEntry(cacheKey, device)
             }
             return device
